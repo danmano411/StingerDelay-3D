@@ -40,3 +40,5 @@ export type ChatResponse = {
 export type GrokStatus = { provider: string; key_present: boolean; key_valid: boolean; detail: string }
 export type CalEvent = { title?: string; summary?: string; start?: string; location?: string; source?: string; [k: string]: unknown }
 export type DayEntry = { event: CalEvent; trace: TripTrace | null; needs_place?: boolean; recommendation?: string; leave_by?: string }
+export type Origin = { lat: number; lon: number }
+export type WeekResponse = { source?: string; days: Record<string, DayEntry[]> }

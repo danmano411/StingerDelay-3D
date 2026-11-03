@@ -5,14 +5,14 @@ import type { TripTrace } from '../api/types'
 export type Progress = { leg_index: number; leg_kind: string; fraction: number }
 export type SimHandle = { send: (m: { type: string; trace?: TripTrace }) => void }
 
-export const Sim = forwardRef<SimHandle, { onProgress: (p: Progress) => void; onDone: () => void }>(
-  ({ onProgress, onDone }, ref) => {
+export const Sim = forwardRef<SimHandle, { onProgress: (p: Progress) => void; onDone: () => void; onPick: (name: string) => void }>(
+  ({ onProgress, onDone, onPick }, ref) => {
     const frame = useRef<HTMLIFrameElement>(null)
     const ready = useRef(false)
     const queue = useRef<object[]>([])
     const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading')
-    const cb = useRef({ onProgress, onDone })
-    cb.current = { onProgress, onDone }
+    const cb = useRef({ onProgress, onDone, onPick })
+    cb.current = { onProgress, onDone, onPick }
 
     useImperativeHandle(ref, () => ({
       send: (m) => {
@@ -30,6 +30,7 @@ export const Sim = forwardRef<SimHandle, { onProgress: (p: Progress) => void; on
           queue.current.splice(0).forEach((m) => frame.current?.contentWindow?.postMessage(m, '*'))
         } else if (d.type === 'walk.progress') cb.current.onProgress(d)
         else if (d.type === 'walk.done') cb.current.onDone()
+        else if (d.type === 'sim.pick' && d.name) cb.current.onPick(String(d.name))
       }
       window.addEventListener('message', h)
       const t = setTimeout(() => !ready.current && setState('failed'), 20000)

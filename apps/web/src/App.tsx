@@ -13,6 +13,7 @@ export default function App() {
   const [arrived, setArrived] = useState(false)
   const [prog, setProg] = useState<Progress | null>(null)
   const [open, setOpen] = useState(true)
+  const [fill, setFill] = useState<{ text: string; n: number } | null>(null)
 
   const show = (t: TripTrace) => {
     setTrace(t)
@@ -36,7 +37,7 @@ export default function App() {
   }
   return (
     <div className="app">
-      <Sim ref={sim} onProgress={setProg} onDone={() => { setWalking(false); setArrived(true) }} />
+      <Sim ref={sim} onPick={(name) => { setTab('chat'); setOpen(true); setFill({ text: `Get me to ${name}`, n: Date.now() }) }} onProgress={setProg} onDone={() => { setWalking(false); setArrived(true) }} />
       <aside className={`panel ${open ? 'open' : ''}`}>
         <button className="grab" onClick={() => setOpen(!open)} aria-expanded={open}>StingerDelay-3D</button>
         <div className="tabs" role="tablist">
@@ -46,7 +47,7 @@ export default function App() {
         </div>
         <div className="body">
           {trace && <PlanCard trace={trace} walking={walking} progress={prog} arrived={arrived} onWalk={walk} onStop={stop} />}
-          {tab === 'chat' ? <Chat onResult={onResult} onTab={setTab} /> : <Today onShow={(t) => { show(t); setTab('chat') }} />}
+          {tab === 'chat' ? <Chat onResult={onResult} onTab={setTab} fill={fill} /> : <Today onShow={(t) => { show(t); setTab('chat') }} />}
         </div>
       </aside>
     </div>

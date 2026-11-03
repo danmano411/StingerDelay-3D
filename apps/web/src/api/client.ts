@@ -13,8 +13,8 @@ const post = (body: unknown): RequestInit => ({
   body: JSON.stringify(body),
 })
 
-export const chat = (conversation_id: string, message: string, origin?: unknown) =>
-  j<ChatResponse>('/grok/chat', post({ conversation_id, message, origin }))
+export const chat = (conversation_id: string, message: string, origin?: { lat: number; lon: number } | null) =>
+  j<ChatResponse>('/grok/chat', post(origin ? { conversation_id, message, origin } : { conversation_id, message }))
 export const status = () => j<GrokStatus>('/grok/status')
 export const calendarDay = () => j<{ events?: CalEvent[]; source?: string } | CalEvent[]>('/calendar/day')
 export const planDay = (events: CalEvent[]) => j<{ entries: DayEntry[] }>('/day/plan', post({ events }))
@@ -23,3 +23,4 @@ export const importIcs = (file: File) => {
   f.append('file', file)
   return j<unknown>('/calendar/import', { method: 'POST', body: f })
 }
+export const routesWeek = () => j<import('./types').WeekResponse>('/routes/week')

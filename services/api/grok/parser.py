@@ -42,11 +42,39 @@ def _clean(s: str) -> str:
     return re.sub(r"^(the|my)\s+", "", s.strip(" .,!?"), flags=re.I).strip()
 
 
+STATED = re.compile(r"(?:,?\s*and\s+)?(?:(?:right now|currently)\s+(?:it'?s\s+|it is\s+)?|(?=it'?s\s+\d+(?::\d+)?\s*(?:am|pm)?\s+now)it'?s\s+)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?:\s+now)?", re.I)
+DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+WEEK = re.compile(r"plan my week|my week|weekly|(" + "|".join(DAYS) + r").*route|routes?.*(" + "|".join(DAYS) + r")", re.I)
+
+
+def stated_now(msg: str, now: datetime):
+    """'right now it's 6' -> (effective now, msg without that clause); None when absent."""
+    m = STATED.search(msg)
+    if not m:
+        return None, msg
+    rest = msg[:m.start()] + msg[m.end():]
+    mid = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    dl, _ = parse_time(rest, mid)
+    h, mi = int(m[1]), int(m[2] or 0)
+    cands = [h % 12 + (12 if m[3].lower() == "pm" else 0)] if m[3] else [h % 12, h % 12 + 12]
+    ts = [mid.replace(hour=c, minute=mi) for c in cands if c < 24 and mi < 60]
+    ts = [t for t in ts if dl is None or t < dl] or ts
+    return (max(ts) if ts else None), rest
+
+
 def parse(msg: str, now: datetime) -> dict:
-    out = {"intent": "chat", "dest": None, "origin": None, "time": None, "tomorrow": False,
+    sn, msg = stated_now(msg, now)
+    if sn:
+        now = sn
+    out = {"now": sn, "day": None, "intent": "chat", "dest": None, "origin": None, "time": None, "tomorrow": False,
            "avoid_stairs": bool(re.search(r"avoid(ing)? (the )?stairs|no stairs|step.?free", msg, re.I))}
     if STOP.search(msg):
         out["intent"] = "stop"
+        return out
+    mw = WEEK.search(msg)
+    if mw:
+        out["intent"] = "week"
+        out["day"] = next((d for d in DAYS if d in msg.lower()), None)
         return out
     if CAL.search(msg):
         out["intent"] = "calendar"
@@ -58,7 +86,7 @@ def parse(msg: str, now: datetime) -> dict:
     if m:
         out["origin"] = _clean(m[1])
     for m in re.finditer(r"\b(?:to|at|for|towards?)\s+(?!\d)(.+?)(?=\s+(?:by|at|before|from|avoid|in)\b|[,.]|$)", msg, re.I):
-        c = _clean(m[1])
+        c = re.sub(r"^(get|go|be|head|walk)\s+(to\s+)?", "", _clean(m[1]), flags=re.I)
         if c and c.lower() not in ("make a plan", "make plan"):
             out["dest"] = c
             break

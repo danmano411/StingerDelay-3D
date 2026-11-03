@@ -25,8 +25,13 @@ export function PlanCard({ trace, walking, progress, arrived, onWalk, onStop }: 
       <div className="facts">
         <div><b>{t(p.leave_at)}</b>leave by</div>
         <div><b>{t(p.arrive_at)}</b>arrive</div>
-        {p.p_on_time != null && <div><b>{Math.round(p.p_on_time * 100)}%</b>on time</div>}
       </div>
+      {p.p_on_time != null && (
+        <p className={`ontime ${p.p_on_time >= 0.85 ? 'hi' : p.p_on_time >= 0.6 ? 'mid' : 'lo'}`}>
+          {p.p_on_time >= 0.85 ? 'Very likely on time' : p.p_on_time >= 0.6 ? 'Likely on time' : p.p_on_time >= 0.4 ? 'Toss-up' : 'Likely late'}
+          <b>{Math.round(p.p_on_time * 100)}% on time</b>
+        </p>
+      )}
       <ol className="legs">
         {p.legs.map((l, i) => {
           const active = walking && progress?.leg_index === i
@@ -43,6 +48,7 @@ export function PlanCard({ trace, walking, progress, arrived, onWalk, onStop }: 
           )
         })}
       </ol>
+      <p className="bandtitle">Likely arrival range: {min(p10)} to {min(p90)} min trip</p>
       <div className="band" role="img" aria-label={`Total ${min(p10)} to ${min(p90)} minutes, median ${min(p50)}`}>
         <i style={{ left: `${((p50 - p10) / span) * 100}%` }} />
       </div>
