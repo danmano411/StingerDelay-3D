@@ -44,7 +44,7 @@ def _clean(s: str) -> str:
 
 STATED = re.compile(r"(?:,?\s*and\s+)?(?:(?:right now|currently)\s+(?:it'?s\s+|it is\s+)?|(?=it'?s\s+\d+(?::\d+)?\s*(?:am|pm)?\s+now)it'?s\s+)(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?:\s+now)?", re.I)
 DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-WEEK = re.compile(r"plan my week|my week|weekly|(" + "|".join(DAYS) + r").*route|routes?.*(" + "|".join(DAYS) + r")", re.I)
+WEEK = re.compile(r"plan my week|my week|weekly|(" + "|".join(DAYS) + r").*route|routes?.*(" + "|".join(DAYS) + r")", re.I)
 
 
 def stated_now(msg: str, now: datetime):
