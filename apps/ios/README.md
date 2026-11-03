@@ -15,13 +15,14 @@ open apps/ios/BuzzRoute/BuzzRoute.xcodeproj
 
 ## What’s in BuzzRoute
 
-- Campus MapKit map with GT places + replay Stinger buses
+- **3D campus twin** (bundled `web-sim` in WKWebView; cube/map toggle in the top bar)
+- Campus MapKit map with GT Stinger route polylines + replay buses
 - PRT-style plan card (walk → wait → ride → transfer → walk)
 - Confidence bands (p10 / p50 / p90) from the local routing engine
 - In-app **Grok Bot** (leave-time + calendar next-event stub)
 - TripTrace verification — Grok only speaks verified planner numbers
 
-Replay mode is on by default. Wire `services/api` for live Stinger Delay quantiles + Google Calendar.
+3D twin opens by default. Switch to Map for planning chrome. Wire `services/api` for live Stinger Delay quantiles + Google Calendar.
 
 ## Shared contracts to consume
 

@@ -5,13 +5,23 @@ struct RootView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            CampusMapView(model: model)
-                .ignoresSafeArea()
+            Group {
+                if model.showTwin3D {
+                    CampusTwinWebView(reloadToken: model.twinReloadToken)
+                } else {
+                    CampusMapView(model: model)
+                }
+            }
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
                 Spacer()
-                bottomPanel
+                if !model.showTwin3D {
+                    bottomPanel
+                } else {
+                    twinChrome
+                }
             }
         }
         .sheet(isPresented: $model.showDestinationPicker) {
@@ -21,6 +31,27 @@ struct RootView: View {
             GrokBotSheet(navigation: model)
         }
         .preferredColorScheme(.dark)
+    }
+
+    private var twinChrome: some View {
+        VStack(spacing: 10) {
+            Text("3D campus twin · orbit with one finger · pinch to zoom · timeline at bottom of scene")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+
+            HStack(spacing: 10) {
+                BuzzPrimaryButton(title: "Ask Grok", systemImage: "waveform") {
+                    model.showGrokBot = true
+                }
+                BuzzPrimaryButton(title: "Plan on Map", systemImage: "map", filled: false) {
+                    model.showTwin3D = false
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
+        }
     }
 
     private var topBar: some View {
@@ -36,6 +67,14 @@ struct RootView: View {
                         .foregroundStyle(.white)
                 }
                 Spacer()
+                Button {
+                    model.showTwin3D.toggle()
+                } label: {
+                    Image(systemName: model.showTwin3D ? "map.fill" : "cube.transparent.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(GTTheme.gold)
+                        .accessibilityLabel(model.showTwin3D ? "Show map" : "Show 3D twin")
+                }
                 Button {
                     model.showGrokBot = true
                 } label: {

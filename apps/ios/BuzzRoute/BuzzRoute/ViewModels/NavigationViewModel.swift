@@ -17,6 +17,8 @@ final class NavigationViewModel: ObservableObject {
     @Published var nextEvent: CalendarEvent
     @Published var showDestinationPicker: Bool = false
     @Published var showGrokBot: Bool = false
+    @Published var showTwin3D: Bool = true
+    @Published var twinReloadToken: Int = 0
     @Published var stingerRoutes: [StingerRouteGeo] = CampusCatalog.routes
 
     private var engine = RoutingEngine()
