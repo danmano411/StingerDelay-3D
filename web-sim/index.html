@@ -579,7 +579,8 @@ const noDepth = (o, ro) => { o.material.depthTest = false; o.renderOrder = ro; r
 const walker = new THREE.Group(); walker.visible = false; scene.add(walker);
 // person built from simple shapes: sphere head, capsule torso, swinging legs and arms (+x is forward), exaggerated scale
 const capsule = new THREE.Group(); capsule.scale.setScalar(.8);
-const pm = (hex, em) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: em, roughness: .6 });
+// transparent so renderOrder sorts the person above the route ribbon, which is also transparent
+const pm = (hex, em) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: em, roughness: .6, transparent: true });
 const part = (geo, mat, x, y, z, parent) => { const m = noDepth(new THREE.Mesh(geo, mat), 13); m.position.set(x, y, z); parent.add(m); return m; };
 const limb = (len, r, mat, x, y, z) => { const p = new THREE.Group(); p.position.set(x, y, z); part(new THREE.CapsuleGeometry(r, len, 4, 8).translate(0, -(len / 2 + r), 0), mat, 0, 0, 0, p); capsule.add(p); return p; };
 const mSkin = pm(0xd9a878, .12), mShirt = pm(0xd9a400, .18), mPants = pm(0x1c4f8f, .2);
@@ -631,7 +632,7 @@ function showPlan(trace) {
   for (const l of legs) {
     all.push(...l.pts); if (l.pts.length < 2 || l.kind === 'wait') continue;
     if (l.kind === 'ride') lines.push({ pts: l.pts, w: 9, color: l.col });
-    else dashes(l.pts, 16, 9).forEach(pts => lines.push({ pts, w: 6, color: l.kind === 'walk' ? GOLDC : WHITEC }));
+    else dashes(l.pts, 12, 8).forEach(pts => lines.push({ pts, w: 3.5, color: (l.kind === 'walk' ? GOLDC : WHITEC).clone().multiplyScalar(.55) }));
   }
   if (lines.length) { const m = new THREE.Mesh(ribbons(lines, 3), new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, transparent: true, opacity: .95, depthTest: false })); m.renderOrder = 10; planGrp.add(m); }
   const pin = (p, col) => { const g = new THREE.Group(); g.position.copy(V3(p[0], p[1]));

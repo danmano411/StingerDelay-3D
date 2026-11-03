@@ -24,7 +24,7 @@ def monday(now: datetime) -> date:
 
 
 def sample_day(d: date) -> list[dict]:
-    rows = SAMPLE_WEEK.get(d.weekday(), SAMPLE_WEEK[0])  # weekend shows Monday's schedule
+    rows = sorted(SAMPLE_WEEK.get(d.weekday(), SAMPLE_WEEK[0]), key=lambda r: r[2:])  # weekend shows Monday's schedule
     out = []
     for i, (t, loc, h, m) in enumerate(rows):
         s = datetime(d.year, d.month, d.day, h, m, tzinfo=TZ)
