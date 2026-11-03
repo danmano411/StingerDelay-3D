@@ -29,8 +29,14 @@ struct PlanCardView: View {
 
             HStack(spacing: 8) {
                 chip(trip.verificationToken, icon: "checkmark.seal.fill")
+                if trip.apiTrace != nil {
+                    chip("API", icon: "server.rack")
+                }
                 if trip.replayMode {
                     chip("REPLAY", icon: "arrow.triangle.2.circlepath")
+                }
+                if let social = trip.apiTrace?.social_factor {
+                    chip(social.label, icon: "bubble.left")
                 }
                 chip(trip.totalDuration.formattedBand(), icon: "clock")
             }

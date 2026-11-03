@@ -20,10 +20,13 @@ final class NavigationViewModel: ObservableObject {
     @Published var showTwin3D: Bool = true
     @Published var twinReloadToken: Int = 0
     @Published var stingerRoutes: [StingerRouteGeo] = CampusCatalog.routes
+    @Published var apiReachable: Bool?
+    @Published var usingServerPlan: Bool = false
 
     private var engine = RoutingEngine()
     private let calendar = CalendarStub()
     private var busTask: Task<Void, Never>?
+    private var planTask: Task<Void, Never>?
     private var replaySeconds: Double = {
         let cal = Calendar.current
         let comps = cal.dateComponents([.hour, .minute, .second], from: Date())
@@ -31,7 +34,9 @@ final class NavigationViewModel: ObservableObject {
     }()
 
     init() {
-        let defaultOrigin = MockCampusData.place(id: "culc")
+        let defaultOrigin = NormalizedCatalog.place(id: "student-center")
+            ?? MockCampusData.place(id: "student-center")
+            ?? MockCampusData.place(id: "culc")
             ?? MockCampusData.destinations.first
             ?? CampusPlace(
                 id: "fallback",
@@ -52,17 +57,24 @@ final class NavigationViewModel: ObservableObject {
         )
         refreshBuses()
         startBusReplay()
+        Task { await probeAPI() }
     }
 
     func stop() {
         busTask?.cancel()
         busTask = nil
+        planTask?.cancel()
+        planTask = nil
     }
 
-    var destinations: [CampusPlace] { MockCampusData.destinations }
+    var destinations: [CampusPlace] {
+        let normalized = NormalizedCatalog.destinations
+        return normalized.isEmpty ? MockCampusData.destinations : normalized
+    }
 
     var placesForMap: [CampusPlace] {
-        MockCampusData.places.filter { place in
+        let base = destinations + MockCampusData.places.filter { $0.kind == .busStop }
+        return base.filter { place in
             place.kind == .busStop
                 || place.id == origin.id
                 || place.id == destination?.id
@@ -78,7 +90,9 @@ final class NavigationViewModel: ObservableObject {
     }
 
     func planForNextCalendarEvent() {
-        guard let place = MockCampusData.place(id: nextEvent.destinationID) else { return }
+        let place = NormalizedCatalog.place(id: nextEvent.destinationID)
+            ?? MockCampusData.place(id: nextEvent.destinationID)
+        guard let place else { return }
         destination = place
         plan(targetArrival: nextEvent.start)
         focusRoute()
@@ -93,30 +107,44 @@ final class NavigationViewModel: ObservableObject {
         isPlanning = true
         errorMessage = nil
         engine.replayMode = replayMode
+        planTask?.cancel()
 
-        let trace = engine.plan(
-            from: origin,
-            to: destination,
-            departAt: .now,
-            targetArrival: targetArrival ?? (destination.id == nextEvent.destinationID ? nextEvent.start : nil)
-        )
+        let originSnapshot = origin
+        let destSnapshot = destination
+        let replay = replayMode
+        let target = targetArrival ?? (destination.id == nextEvent.destinationID ? nextEvent.start : nil)
 
-        do {
-            try TripVerification.verify(trace)
-            trip = trace
-            verificationOK = true
-        } catch {
-            trip = nil
-            verificationOK = false
-            errorMessage = error.localizedDescription
+        planTask = Task {
+            defer { isPlanning = false }
+
+            if let serverTrace = await planViaAPI(
+                origin: originSnapshot,
+                destination: destSnapshot,
+                targetArrival: target,
+                replay: replay
+            ) {
+                apply(trace: serverTrace, fromServer: true)
+                focusRoute()
+                return
+            }
+
+            // Offline / API-down fallback — local RoutingEngine (numbers still verified).
+            let local = engine.plan(
+                from: originSnapshot,
+                to: destSnapshot,
+                departAt: .now,
+                targetArrival: target
+            )
+            apply(trace: local, fromServer: false)
+            focusRoute()
         }
-        isPlanning = false
     }
 
     func clearTrip() {
         trip = nil
         destination = nil
         verificationOK = false
+        usingServerPlan = false
     }
 
     func focusCampus() {
@@ -127,6 +155,67 @@ final class NavigationViewModel: ObservableObject {
                     span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
                 )
             )
+        }
+    }
+
+    private func apply(trace: TripTrace, fromServer: Bool) {
+        do {
+            try TripVerification.verify(trace)
+            trip = trace
+            verificationOK = true
+            usingServerPlan = fromServer
+            if let api = trace.apiTrace {
+                let label = "\(trace.origin.shortName) → \(trace.destination.shortName)"
+                Task {
+                    _ = try? await LocalPlanStore.shared.saveTrace(api, label: label)
+                }
+            }
+        } catch {
+            trip = nil
+            verificationOK = false
+            usingServerPlan = false
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func planViaAPI(
+        origin: CampusPlace,
+        destination: CampusPlace,
+        targetArrival: Date?,
+        replay: Bool
+    ) async -> TripTrace? {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime]
+        let constraints = APIPlanConstraints(
+            origin: APIPlaceRef(lat: origin.latitude, lon: origin.longitude, place_id: origin.id),
+            destination: APIPlaceRef(lat: destination.latitude, lon: destination.longitude, place_id: destination.id),
+            arrive_by: targetArrival.map { iso.string(from: $0) },
+            depart_at: nil,
+            prefs: APIPlanPrefs(avoid_stairs: false, walk_speed_mps: 1.4)
+        )
+
+        do {
+            let apiTrace = try await BuzzAPIClient.shared.planTrip(constraints)
+            apiReachable = true
+            return TripTraceMapper.toUI(
+                apiTrace,
+                origin: origin,
+                destination: destination,
+                replayMode: replay
+            )
+        } catch {
+            apiReachable = false
+            errorMessage = "Server planner offline — using local TripTrace. (\(error.localizedDescription))"
+            return nil
+        }
+    }
+
+    private func probeAPI() async {
+        do {
+            _ = try await BuzzAPIClient.shared.health()
+            apiReachable = true
+        } catch {
+            apiReachable = false
         }
     }
 
@@ -171,7 +260,6 @@ final class NavigationViewModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 2_500_000_000)
                 await MainActor.run {
                     guard let self else { return }
-                    // Advance ~2.5 min of campus time per tick when replay is on
                     if self.replayMode {
                         self.replaySeconds = (self.replaySeconds + 150).truncatingRemainder(dividingBy: 86_400)
                     }

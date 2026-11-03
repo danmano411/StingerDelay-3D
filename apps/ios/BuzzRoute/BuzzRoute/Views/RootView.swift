@@ -5,7 +5,8 @@ struct RootView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Group {
+            ZStack {
+                GTTheme.backgroundGradient
                 if model.showTwin3D {
                     CampusTwinWebView(reloadToken: model.twinReloadToken)
                 } else {
@@ -45,13 +46,16 @@ struct RootView: View {
                 BuzzPrimaryButton(title: "Ask Grok", systemImage: "waveform") {
                     model.showGrokBot = true
                 }
+                .accessibilityIdentifier("askGrokTwin")
                 BuzzPrimaryButton(title: "Plan on Map", systemImage: "map", filled: false) {
                     model.showTwin3D = false
                 }
+                .accessibilityIdentifier("planOnMap")
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 10)
         }
+        .accessibilityIdentifier("twinChrome")
     }
 
     private var topBar: some View {
@@ -75,6 +79,7 @@ struct RootView: View {
                         .foregroundStyle(GTTheme.gold)
                         .accessibilityLabel(model.showTwin3D ? "Show map" : "Show 3D twin")
                 }
+                .accessibilityIdentifier("toggleTwinMap")
                 Button {
                     model.showGrokBot = true
                 } label: {
@@ -82,6 +87,7 @@ struct RootView: View {
                         .font(.system(size: 30))
                         .foregroundStyle(GTTheme.gold)
                 }
+                .accessibilityIdentifier("openGrokHeader")
             }
 
             HStack(spacing: 8) {

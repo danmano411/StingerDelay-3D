@@ -185,7 +185,9 @@ struct RoutingEngine {
                 originID: origin.id,
                 destinationID: destination.id,
                 createdAt: created
-            )
+            ),
+            allowedNumbers: [],
+            apiTrace: nil
         )
 
         return trace
@@ -302,7 +304,9 @@ struct RoutingEngine {
                 originID: origin.id,
                 destinationID: origin.id,
                 createdAt: date
-            )
+            ),
+            allowedNumbers: [],
+            apiTrace: nil
         )
     }
 }

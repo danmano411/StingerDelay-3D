@@ -1,0 +1,659 @@
+[
+  {
+    "id": 195,
+    "name": "Baker Building on State St.",
+    "lat": 33.78034577,
+    "lon": -84.39922995,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 196,
+    "name": "Kendeda Building",
+    "lat": 33.77836,
+    "lon": -84.39956,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 206,
+    "name": "Hemphill Ave & Curran St",
+    "lat": 33.7846538176,
+    "lon": -84.4059668386,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 208,
+    "name": "Center St. Apartments & Hemphill Ave",
+    "lat": 33.77971,
+    "lon": -84.402416,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 209,
+    "name": "GT Competition Center (575 14th Street)",
+    "lat": 33.78636825,
+    "lon": -84.40532109,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 210,
+    "name": "14th St & State St",
+    "lat": 33.78613,
+    "lon": -84.3988,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 211,
+    "name": "GTRI Conference Center",
+    "lat": 33.786282,
+    "lon": -84.395591,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 212,
+    "name": "McCamish & 10th St.",
+    "lat": 33.7816116884,
+    "lon": -84.392611347,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 213,
+    "name": "Graduate Living Center",
+    "lat": 33.781533,
+    "lon": -84.396217,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 250,
+    "name": "North Avenue Apts - To West Campus",
+    "lat": 33.769921,
+    "lon": -84.391754,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 264,
+    "name": "Brown Residence Hall",
+    "lat": 33.771857,
+    "lon": -84.39192,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 265,
+    "name": "Techwood Dr & Field Residence Hall",
+    "lat": 33.77406,
+    "lon": -84.39192,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 266,
+    "name": "Techwood & 5th - North",
+    "lat": 33.776757,
+    "lon": -84.39206,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 267,
+    "name": "Russ Chandler Stadium",
+    "lat": 33.77699,
+    "lon": -84.39405,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 268,
+    "name": "Klaus Building WB",
+    "lat": 33.777485,
+    "lon": -84.395576,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 269,
+    "name": "Nanotechnology",
+    "lat": 33.77832,
+    "lon": -84.398084,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 270,
+    "name": "Kendeda Building",
+    "lat": 33.77836,
+    "lon": -84.39956,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 271,
+    "name": "8th St & Hemphill Ave",
+    "lat": 33.779631,
+    "lon": -84.40274,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 272,
+    "name": "Paper Tricentennial",
+    "lat": 33.780598,
+    "lon": -84.404657,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 273,
+    "name": "West Village",
+    "lat": 33.779616,
+    "lon": -84.404709,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 274,
+    "name": "Center St. Apartments & Hemphill Ave",
+    "lat": 33.77971,
+    "lon": -84.402416,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 275,
+    "name": "Ferst Dr & Hemphill Ave",
+    "lat": 33.77845,
+    "lon": -84.400824,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 276,
+    "name": "Cherry Emerson",
+    "lat": 33.778179,
+    "lon": -84.397328,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 277,
+    "name": "Klaus Building EB",
+    "lat": 33.777097,
+    "lon": -84.395484,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 278,
+    "name": "Techwood Dr & 5th St - South",
+    "lat": 33.7764641679,
+    "lon": -84.3920991279,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 279,
+    "name": "Techwood Dr & Bobby Dodd Way",
+    "lat": 33.7743564577,
+    "lon": -84.3919958619,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 280,
+    "name": "COP & North Ave.",
+    "lat": 33.7706651711,
+    "lon": -84.3921848307,
+    "route_ids": [
+      20
+    ]
+  },
+  {
+    "id": 282,
+    "name": "West Village",
+    "lat": 33.779616,
+    "lon": -84.404709,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 283,
+    "name": "8th St & Hemphill Ave",
+    "lat": 33.779631,
+    "lon": -84.40274,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 284,
+    "name": "Couch Park",
+    "lat": 33.77796239,
+    "lon": -84.40201458,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 285,
+    "name": "CRC & Stamps Health",
+    "lat": 33.7751,
+    "lon": -84.40265,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 289,
+    "name": "North Avenue Apts - To East Campus",
+    "lat": 33.770206,
+    "lon": -84.391765,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 299,
+    "name": "Fitten Hall",
+    "lat": 33.778273,
+    "lon": -84.404191,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 300,
+    "name": "Ferst Drive & Student Center",
+    "lat": 33.7734035096,
+    "lon": -84.3995830602,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 301,
+    "name": "Weber Loop",
+    "lat": 33.77315003,
+    "lon": -84.39701207,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 302,
+    "name": "COP & North Ave.",
+    "lat": 33.7706651711,
+    "lon": -84.3921848307,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 303,
+    "name": "Ferst Dr & Cherry St",
+    "lat": 33.77228,
+    "lon": -84.39548,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 305,
+    "name": "Student Center",
+    "lat": 33.7734278724,
+    "lon": -84.3991730437,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 306,
+    "name": "Exhibition Hall",
+    "lat": 33.774923097,
+    "lon": -84.4025365214,
+    "route_ids": [
+      21
+    ]
+  },
+  {
+    "id": 385,
+    "name": "MARTA Midtown Station",
+    "lat": 33.7808216228,
+    "lon": -84.3864059203,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 386,
+    "name": "Technology Square WB",
+    "lat": 33.77692,
+    "lon": -84.38978,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 387,
+    "name": "5th Street Bridge WB",
+    "lat": 33.776943,
+    "lon": -84.391707,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 388,
+    "name": "5th Street Bridge EB",
+    "lat": 33.7768308694,
+    "lon": -84.3920206208,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 389,
+    "name": "Technology Square EB",
+    "lat": 33.7768,
+    "lon": -84.38975,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 390,
+    "name": "College of Business",
+    "lat": 33.77677,
+    "lon": -84.387753,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 391,
+    "name": "Academy of Medicine",
+    "lat": 33.778536,
+    "lon": -84.38724,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 392,
+    "name": "Clough Commons",
+    "lat": 33.775274,
+    "lon": -84.396138,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 393,
+    "name": "Publix at the Plaza",
+    "lat": 33.78067,
+    "lon": -84.388671,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 394,
+    "name": "Fowler NB",
+    "lat": 33.7765386276,
+    "lon": -84.393579518,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 395,
+    "name": "Fowler SB",
+    "lat": 33.7765417384,
+    "lon": -84.3936997556,
+    "route_ids": [
+      28
+    ]
+  },
+  {
+    "id": 396,
+    "name": "MARTA Midtown Station",
+    "lat": 33.7808216228,
+    "lon": -84.3864059203,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 397,
+    "name": "Technology Square WB",
+    "lat": 33.77692,
+    "lon": -84.38978,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 398,
+    "name": "5th Street Bridge WB",
+    "lat": 33.776943,
+    "lon": -84.391707,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 399,
+    "name": "5th Street Bridge EB",
+    "lat": 33.7768308694,
+    "lon": -84.3920206208,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 400,
+    "name": "Technology Square EB",
+    "lat": 33.7768,
+    "lon": -84.38975,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 401,
+    "name": "College of Business",
+    "lat": 33.77677,
+    "lon": -84.387753,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 402,
+    "name": "Academy of Medicine",
+    "lat": 33.778536,
+    "lon": -84.38724,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 404,
+    "name": "Publix at the Plaza",
+    "lat": 33.78067,
+    "lon": -84.388671,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 407,
+    "name": "Exhibition Hall",
+    "lat": 33.774923097,
+    "lon": -84.4025365214,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 408,
+    "name": "Ferst Dr & Hemphill Ave",
+    "lat": 33.77845,
+    "lon": -84.400824,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 409,
+    "name": "Cherry Emerson",
+    "lat": 33.778179,
+    "lon": -84.397328,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 410,
+    "name": "Klaus Building EB",
+    "lat": 33.777097,
+    "lon": -84.395484,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 411,
+    "name": "Russ Chandler Stadium",
+    "lat": 33.77699,
+    "lon": -84.39405,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 412,
+    "name": "Klaus Building WB",
+    "lat": 33.777485,
+    "lon": -84.395576,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 413,
+    "name": "Nanotechnology",
+    "lat": 33.77832,
+    "lon": -84.398084,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 415,
+    "name": "Kendeda Building",
+    "lat": 33.77836,
+    "lon": -84.39956,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 416,
+    "name": "Couch Park",
+    "lat": 33.77796239,
+    "lon": -84.40201458,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 417,
+    "name": "CRC & Stamps Health",
+    "lat": 33.7751,
+    "lon": -84.40265,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 418,
+    "name": "Georgia Tech Police Department",
+    "lat": 33.781098,
+    "lon": -84.403725,
+    "route_ids": [
+      17
+    ]
+  },
+  {
+    "id": 419,
+    "name": "Weber Loop",
+    "lat": 33.77315003,
+    "lon": -84.39701207,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 420,
+    "name": "Student Center",
+    "lat": 33.7734278724,
+    "lon": -84.3991730437,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 421,
+    "name": "Ferst Drive & Student Center",
+    "lat": 33.7734035096,
+    "lon": -84.3995830602,
+    "route_ids": [
+      29
+    ]
+  },
+  {
+    "id": 463,
+    "name": "Weber Building",
+    "lat": 33.772782,
+    "lon": -84.396964,
+    "route_ids": [
+      21
+    ]
+  }
+]

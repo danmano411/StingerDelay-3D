@@ -20,18 +20,15 @@ struct CampusTwinWebView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
         var lastReloadToken: Int = -1
-        private var handler: TwinSchemeHandler?
-        private(set) var lastError: String?
+        private var schemeHandler: TwinSchemeHandler?
 
         func makeWebView() -> WKWebView {
             let config = WKWebViewConfiguration()
             config.defaultWebpagePreferences.allowsContentJavaScript = true
-            config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
-            config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
 
             if let root = Self.twinRoot() {
                 let handler = TwinSchemeHandler(twinRoot: root)
-                self.handler = handler
+                schemeHandler = handler
                 config.setURLSchemeHandler(handler, forURLScheme: TwinSchemeHandler.scheme)
             }
 
@@ -48,12 +45,14 @@ struct CampusTwinWebView: UIViewRepresentable {
                       });
                     } catch (e) {}
                   };
-                  const wrap = (level, fn) => function(){ post(level, arguments); return fn.apply(console, arguments); };
+                  const wrap = (level, fn) => function(){
+                    post(level, arguments);
+                    return fn.apply(console, arguments);
+                  };
                   console.log = wrap('log', console.log);
                   console.warn = wrap('warn', console.warn);
                   console.error = wrap('error', console.error);
                   window.addEventListener('error', ev => post('error', [ev.message]));
-                  window.addEventListener('unhandledrejection', ev => post('error', [ev.reason]));
                 })();
                 """,
                 injectionTime: .atDocumentStart,
@@ -61,24 +60,27 @@ struct CampusTwinWebView: UIViewRepresentable {
             ))
 
             let webView = WKWebView(frame: .zero, configuration: config)
-            webView.isOpaque = false
-            webView.backgroundColor = .black
+            let bg = UIColor(red: 0.03, green: 0.04, blue: 0.06, alpha: 1)
+            webView.isOpaque = true
+            webView.backgroundColor = bg
+            webView.scrollView.backgroundColor = bg
             webView.scrollView.isScrollEnabled = false
             webView.scrollView.bounces = false
+            if #available(iOS 15.0, *) {
+                webView.underPageBackgroundColor = bg
+            }
             webView.navigationDelegate = self
             reload(webView)
             return webView
         }
 
         func reload(_ webView: WKWebView) {
-            guard Self.twinRoot() != nil else {
-                lastError = "Twin folder missing — rebuild the app (Copy Twin Folder phase)."
-                webView.loadHTMLString(Self.errorHTML(lastError!), baseURL: nil)
+            // Prefer file:// first — this rendered correctly on working Simulators.
+            if let index = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "Twin") {
+                webView.loadFileURL(index, allowingReadAccessTo: index.deletingLastPathComponent())
                 return
             }
-            // Custom scheme keeps relative ./vendor/... imports working
-            let url = URL(string: "\(TwinSchemeHandler.scheme)://twin/index.html")!
-            webView.load(URLRequest(url: url))
+            webView.loadHTMLString(Self.errorHTML("Twin folder missing — Clean Build, then ▶ Run."), baseURL: nil)
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -87,16 +89,16 @@ struct CampusTwinWebView: UIViewRepresentable {
                   let text = body["message"] as? String
             else { return }
             print("[Twin \(level)] \(text)")
-            if level == "error" { lastError = text }
-        }
-
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            print("Twin nav fail: \(error.localizedDescription)")
-            webView.loadHTMLString(Self.errorHTML(error.localizedDescription), baseURL: nil)
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             print("Twin provisional fail: \(error.localizedDescription)")
+            let url = URL(string: "\(TwinSchemeHandler.scheme)://twin/index.html")!
+            webView.load(URLRequest(url: url))
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            print("Twin nav fail: \(error.localizedDescription)")
             webView.loadHTMLString(Self.errorHTML(error.localizedDescription), baseURL: nil)
         }
 
@@ -113,7 +115,6 @@ struct CampusTwinWebView: UIViewRepresentable {
             <html><body style="background:#070a10;color:#EAAA00;font:15px -apple-system;padding:24px;line-height:1.4">
             <h3 style="color:#fff;margin:0 0 8px">3D twin failed to load</h3>
             <p>\(safe)</p>
-            <p style="color:#8591a5">In Xcode: Product → Clean Build Folder, then ▶ Run on this Simulator.</p>
             </body></html>
             """
         }

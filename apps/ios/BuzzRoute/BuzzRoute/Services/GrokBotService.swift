@@ -28,9 +28,74 @@ struct GrokMessage: Identifiable, Hashable {
     }
 }
 
-/// In-app Grok Bot: interprets TripTrace + calendar context. Never invents numbers.
+struct GrokBotReply {
+    let message: GrokMessage
+    let trace: TripTrace?
+    let action: String?
+    let conversationID: String?
+}
+
+/// Talks to `POST /grok/chat` when the API is up; otherwise interprets a verified local TripTrace.
 struct GrokBotService {
+    @MainActor
     func respond(
+        to prompt: String,
+        conversationID: String,
+        navigation: NavigationViewModel
+    ) async -> GrokBotReply {
+        let origin = APIChatOrigin(lat: navigation.origin.latitude, lon: navigation.origin.longitude)
+        do {
+            let response = try await BuzzAPIClient.shared.grokChat(
+                conversationID: conversationID,
+                message: prompt,
+                origin: origin
+            )
+            navigation.apiReachable = true
+
+            var mapped: TripTrace?
+            if let apiTrace = response.trace {
+                let dest = navigation.destination
+                    ?? NormalizedCatalog.place(id: "klaus")
+                    ?? navigation.origin
+                mapped = TripTraceMapper.toUI(
+                    apiTrace,
+                    origin: navigation.origin,
+                    destination: dest,
+                    replayMode: navigation.replayMode
+                )
+                if let mapped {
+                    try? TripVerification.verify(mapped)
+                }
+            }
+
+            let msg = GrokMessage(
+                role: .assistant,
+                text: response.reply,
+                spokenFromTrace: response.verified
+            )
+            return GrokBotReply(
+                message: msg,
+                trace: mapped,
+                action: response.action,
+                conversationID: response.conversation_id
+            )
+        } catch {
+            navigation.apiReachable = false
+            let local = localRespond(
+                to: prompt,
+                trace: navigation.trip,
+                nextEvent: navigation.nextEvent
+            )
+            let note = GrokMessage(
+                role: .assistant,
+                text: "\(local.text)\n\n(API offline at \(APIConfig.baseURL.host ?? "localhost") — local TripTrace only.)",
+                spokenFromTrace: local.spokenFromTrace
+            )
+            return GrokBotReply(message: note, trace: nil, action: nil, conversationID: conversationID)
+        }
+    }
+
+    private func localRespond(
         to prompt: String,
         trace: TripTrace?,
         nextEvent: CalendarEvent?

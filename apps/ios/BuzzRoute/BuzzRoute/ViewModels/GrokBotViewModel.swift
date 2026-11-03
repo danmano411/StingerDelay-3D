@@ -7,25 +7,28 @@ final class GrokBotViewModel: ObservableObject {
     @Published var draft: String = ""
     @Published var isListening: Bool = false
     @Published var isThinking: Bool = false
+    @Published var conversationID: String = UUID().uuidString
+    @Published var lastAction: String?
 
     private let bot = GrokBotService()
 
     let suggestions = [
+        "Get me to Klaus by 8:30",
         "Hey Grok, using my calendar, when should I leave?",
         "Explain this confidence band",
-        "How delayed is my Stinger?"
+        "Walk that path"
     ]
 
     init() {
         messages = [
             GrokMessage(
                 role: .assistant,
-                text: "I’m Grok Bot for Buzz Route. I only speak numbers from a verified TripTrace — ask me when to leave for your next event."
+                text: "I’m Grok Bot for Buzz Route. Ask “Get me to Klaus by 8:30” — numbers come from the shared API TripTrace when the server is up."
             )
         ]
     }
 
-    func send(_ text: String, trace: TripTrace?, event: CalendarEvent?) {
+    func send(_ text: String, navigation: NavigationViewModel) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
@@ -33,26 +36,39 @@ final class GrokBotViewModel: ObservableObject {
         draft = ""
         isThinking = true
 
-        // Light delay so the sheet feels conversational
         Task {
-            try? await Task.sleep(nanoseconds: 450_000_000)
-            let reply = bot.respond(to: trimmed, trace: trace, nextEvent: event)
-            messages.append(reply)
+            let reply = await bot.respond(
+                to: trimmed,
+                conversationID: conversationID,
+                navigation: navigation
+            )
+            if let newID = reply.conversationID {
+                conversationID = newID
+            }
+            lastAction = reply.action
+            messages.append(reply.message)
+            if let trace = reply.trace {
+                navigation.trip = trace
+                navigation.verificationOK = TripVerification.isVerified(trace)
+                navigation.usingServerPlan = trace.apiTrace != nil
+                if navigation.destination == nil {
+                    navigation.destination = trace.destination
+                }
+            }
             isThinking = false
         }
     }
 
-    func toggleListen(trace: TripTrace?, event: CalendarEvent?) {
+    func toggleListen(navigation: NavigationViewModel) {
         if isListening {
             isListening = false
-            // Simulated speech result for Simulator demos
-            send("Hey Grok, using my calendar, when should I leave for the next event?", trace: trace, event: event)
+            send("Get me to Klaus by 8:30", navigation: navigation)
         } else {
             isListening = true
             Task {
                 try? await Task.sleep(nanoseconds: 1_400_000_000)
                 if isListening {
-                    toggleListen(trace: trace, event: event)
+                    toggleListen(navigation: navigation)
                 }
             }
         }

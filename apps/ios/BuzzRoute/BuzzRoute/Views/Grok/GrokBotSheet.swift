@@ -85,7 +85,7 @@ struct GrokBotSheet: View {
             HStack(spacing: 8) {
                 ForEach(bot.suggestions, id: \.self) { suggestion in
                     Button {
-                        bot.send(suggestion, trace: navigation.trip, event: navigation.nextEvent)
+                        bot.send(suggestion, navigation: navigation)
                     } label: {
                         Text(suggestion)
                             .font(.caption.weight(.medium))
@@ -106,7 +106,7 @@ struct GrokBotSheet: View {
     private var composer: some View {
         HStack(spacing: 10) {
             Button {
-                bot.toggleListen(trace: navigation.trip, event: navigation.nextEvent)
+                bot.toggleListen(navigation: navigation)
             } label: {
                 Image(systemName: bot.isListening ? "waveform.circle.fill" : "mic.circle.fill")
                     .font(.system(size: 34))
@@ -123,7 +123,7 @@ struct GrokBotSheet: View {
                 .foregroundStyle(.white)
 
             Button {
-                bot.send(bot.draft, trace: navigation.trip, event: navigation.nextEvent)
+                bot.send(bot.draft, navigation: navigation)
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 32))

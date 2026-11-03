@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stingerdelay-3d.local/contracts/local_plan_v0.json",
+  "title": "LocalSavedPlan",
+  "description": "v0 schema for locally saved trip plans (web IndexedDB + iOS offline storage). tripTrace mirrors the A1 TripTrace contract; keep payloads compact.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "day", "label", "tripTrace", "createdAt"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable client-generated id (UUID recommended)."
+    },
+    "day": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Calendar day key (YYYY-MM-DD, local campus day)."
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Human label, e.g. class name or destination + time."
+    },
+    "tripTrace": {
+      "$ref": "#/$defs/TripTrace"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the plan was saved."
+    }
+  },
+  "$defs": {
+    "Quantiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p10", "p50", "p90"],
+      "properties": {
+        "p10": { "type": "number" },
+        "p50": { "type": "number" },
+        "p90": { "type": "number" }
+      }
+    },
+    "SocialFactor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["badge", "spread_multiplier"],
+      "properties": {
+        "badge": {
+          "type": "string",
+          "description": "UI badge text; social signals must remain visible."
+        },
+        "spread_multiplier": {
+          "type": "number",
+          "minimum": 1,
+          "description": "Widens uncertainty only; never replaces planner means."
+        },
+        "source": {
+          "type": "string",
+          "description": "Optional provenance, e.g. x_mock or x_live."
+        }
+      }
+    },
+    "Leg": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind", "duration_s"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["walk", "wait", "ride", "transfer_walk"]
+        },
+        "duration_s": { "type": "number", "minimum": 0 },
+        "from_id": { "type": ["string", "null"] },
+        "to_id": { "type": ["string", "null"] },
+        "route_id": { "type": ["string", "null"] },
+        "synthetic": {
+          "type": "boolean",
+          "description": "True for Blue / derived routes."
+        },
+        "quantiles": { "$ref": "#/$defs/Quantiles" }
+      }
+    },
+    "TripPlan": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["legs", "duration_s"],
+      "properties": {
+        "legs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Leg" },
+          "minItems": 1
+        },
+        "duration_s": { "type": "number", "minimum": 0 },
+        "quantiles": { "$ref": "#/$defs/Quantiles" },
+        "p_on_time": { "type": "number", "minimum": 0, "maximum": 1 },
+        "p_catch": { "type": "number", "minimum": 0, "maximum": 1 },
+        "geometry_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Stop/route ids only; resolve geometry client-side."
+        }
+      }
+    },
+    "TripTrace": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["plan", "allowed_numbers"],
+      "properties": {
+        "plan": { "$ref": "#/$defs/TripPlan" },
+        "alternatives": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TripPlan" }
+        },
+        "quantiles": { "$ref": "#/$defs/Quantiles" },
+        "p_on_time": { "type": "number", "minimum": 0, "maximum": 1 },
+        "p_catch": { "type": "number", "minimum": 0, "maximum": 1 },
+        "explanation_facts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "allowed_numbers": {
+          "type": "array",
+          "items": { "type": "number" },
+          "description": "Only these numbers may be shown or spoken."
+        },
+        "social_factor": { "$ref": "#/$defs/SocialFactor" },
+        "model": {
+          "type": "string",
+          "description": "e.g. eta_decile_lookup_v0"
+        },
+        "replay": {
+          "type": "boolean",
+          "description": "True when plan used replay / frozen buses."
+        }
+      }
+    }
+  }
+}

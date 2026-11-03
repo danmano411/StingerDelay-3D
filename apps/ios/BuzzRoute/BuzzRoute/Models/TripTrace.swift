@@ -141,6 +141,70 @@ struct TripTrace: Identifiable, Hashable, Codable {
     let confidence: ConfidenceBand
     let replayMode: Bool
     let verificationToken: String
+    /// Numbers the UI / Grok may show (from API `allowed_numbers`). Empty for offline local planner.
+    let allowedNumbers: [Double]
+    /// Raw OpenAPI TripTrace when planned via `POST /trips/plan` or `/grok/chat`.
+    let apiTrace: APITripTrace?
+
+    enum CodingKeys: String, CodingKey {
+        case id, createdAt, origin, destination, segments, totalDuration
+        case confidence, replayMode, verificationToken, allowedNumbers
+    }
+
+    init(
+        id: UUID = UUID(),
+        createdAt: Date,
+        origin: CampusPlace,
+        destination: CampusPlace,
+        segments: [RouteSegment],
+        totalDuration: DurationQuantiles,
+        confidence: ConfidenceBand,
+        replayMode: Bool,
+        verificationToken: String,
+        allowedNumbers: [Double] = [],
+        apiTrace: APITripTrace? = nil
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.origin = origin
+        self.destination = destination
+        self.segments = segments
+        self.totalDuration = totalDuration
+        self.confidence = confidence
+        self.replayMode = replayMode
+        self.verificationToken = verificationToken
+        self.allowedNumbers = allowedNumbers
+        self.apiTrace = apiTrace
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        origin = try c.decode(CampusPlace.self, forKey: .origin)
+        destination = try c.decode(CampusPlace.self, forKey: .destination)
+        segments = try c.decode([RouteSegment].self, forKey: .segments)
+        totalDuration = try c.decode(DurationQuantiles.self, forKey: .totalDuration)
+        confidence = try c.decode(ConfidenceBand.self, forKey: .confidence)
+        replayMode = try c.decode(Bool.self, forKey: .replayMode)
+        verificationToken = try c.decode(String.self, forKey: .verificationToken)
+        allowedNumbers = try c.decodeIfPresent([Double].self, forKey: .allowedNumbers) ?? []
+        apiTrace = nil
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(origin, forKey: .origin)
+        try c.encode(destination, forKey: .destination)
+        try c.encode(segments, forKey: .segments)
+        try c.encode(totalDuration, forKey: .totalDuration)
+        try c.encode(confidence, forKey: .confidence)
+        try c.encode(replayMode, forKey: .replayMode)
+        try c.encode(verificationToken, forKey: .verificationToken)
+        try c.encode(allowedNumbers, forKey: .allowedNumbers)
+    }
 
     var polylineCoordinates: [CLLocationCoordinate2D] {
         var coords: [CLLocationCoordinate2D] = []
@@ -159,5 +223,8 @@ struct TripTrace: Identifiable, Hashable, Codable {
         let onTime = Int((confidence.pOnTime * 100).rounded())
         return "TripTrace \(verificationToken): typical \(eta), band \(band), on-time probability \(onTime) percent."
     }
+
+    static func == (lhs: TripTrace, rhs: TripTrace) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "klaus",
+    "name": "Klaus",
+    "lat": 33.777485,
+    "lon": -84.395576,
+    "stop_id": 268,
+    "stop_name": "Klaus Building WB"
+  },
+  {
+    "id": "kendeda",
+    "name": "Kendeda",
+    "lat": 33.77836,
+    "lon": -84.39956,
+    "stop_id": 270,
+    "stop_name": "Kendeda Building"
+  },
+  {
+    "id": "student-center",
+    "name": "Student Center",
+    "lat": 33.7734278724,
+    "lon": -84.3991730437,
+    "stop_id": 305,
+    "stop_name": "Student Center"
+  },
+  {
+    "id": "marta-midtown",
+    "name": "MARTA Midtown",
+    "lat": 33.7808216228,
+    "lon": -84.3864059203,
+    "stop_id": 396,
+    "stop_name": "MARTA Midtown Station"
+  },
+  {
+    "id": "west-village",
+    "name": "West Village",
+    "lat": 33.779616,
+    "lon": -84.404709,
+    "stop_id": 273,
+    "stop_name": "West Village"
+  },
+  {
+    "id": "clough",
+    "name": "Clough",
+    "lat": 33.775274,
+    "lon": -84.396138,
+    "stop_id": 392,
+    "stop_name": "Clough Commons"
+  },
+  {
+    "id": "crc",
+    "name": "CRC",
+    "lat": 33.7751,
+    "lon": -84.40265,
+    "stop_id": 285,
+    "stop_name": "CRC & Stamps Health"
+  }
+]
