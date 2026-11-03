@@ -6,7 +6,7 @@ Out (page to parent): web `window.parent.postMessage`; iOS `window.webkit.messag
 ## In
 - `plan.show {trace}`: `trace.plan.legs[]` each `{kind: walk|wait|ride|transfer_walk, path: [[lat,lon],...], route_id, duration_s_p50, label}`. Draws route, frames camera.
 - `plan.clear`
-- `walk.start {speed?}`: speed multiplier; default makes whole trip about 25 s.
+- `walk.start {speed?}`: optional multiplier on the shared clock. By default the walker and buses both run at 5x real time, so a trip takes its planned duration divided by 5. Change the rate with `?speed=N` on the page URL.
 - `walk.stop`
 - `camera.focus {lat,lon}`
 

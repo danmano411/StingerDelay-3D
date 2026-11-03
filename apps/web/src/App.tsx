@@ -14,6 +14,10 @@ export default function App() {
   const [prog, setProg] = useState<Progress | null>(null)
   const [open, setOpen] = useState(true)
   const [fill, setFill] = useState<{ text: string; n: number } | null>(null)
+  const [session, setSession] = useState(0)
+  const [started, setStarted] = useState(false)
+  const current = useRef(0)
+  current.current = session
 
   const show = (t: TripTrace) => {
     setTrace(t)
@@ -30,7 +34,19 @@ export default function App() {
     setWalking(false)
     sim.current?.send({ type: 'walk.stop' })
   }
-  const onResult = (r: ChatResponse) => {
+  const back = () => {
+    setWalking(false)
+    setArrived(false)
+    setProg(null)
+    setTrace(null)
+    setStarted(false)
+    setFill(null)
+    setTab('chat')
+    setSession((n) => n + 1)
+    sim.current?.send({ type: 'plan.clear' })
+  }
+  const onResult = (r: ChatResponse, from: number) => {
+    if (from !== current.current) return // answer arrived after Back was pressed
     if (r.trace) show(r.trace)
     if (r.action === 'walk') walk()
     if (r.action === 'stop_walk') stop()
@@ -39,7 +55,10 @@ export default function App() {
     <div className="app">
       <Sim ref={sim} onPick={(name) => { setTab('chat'); setOpen(true); setFill({ text: `Get me to ${name}`, n: Date.now() }) }} onProgress={setProg} onDone={() => { setWalking(false); setArrived(true) }} />
       <aside className={`panel ${open ? 'open' : ''}`}>
-        <button className="grab" onClick={() => setOpen(!open)} aria-expanded={open}>Buzz Route</button>
+        <div className="head">
+          {(started || trace || tab !== 'chat') && <button className="back" onClick={back}><span aria-hidden="true">&larr;</span> Back</button>}
+          <button className="grab" onClick={() => setOpen(!open)} aria-expanded={open}>Buzz Route</button>
+        </div>
         <div className="tabs" role="tablist">
           {(['chat', 'today'] as const).map((k) => (
             <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{k === 'chat' ? 'Assistant' : 'Today'}</button>
@@ -47,7 +66,7 @@ export default function App() {
         </div>
         <div className="body">
           {trace && <PlanCard trace={trace} walking={walking} progress={prog} arrived={arrived} onWalk={walk} onStop={stop} />}
-          {tab === 'chat' ? <Chat onResult={onResult} onTab={setTab} fill={fill} /> : <Today onShow={(t) => { show(t); setTab('chat') }} />}
+          {tab === 'chat' ? <Chat key={session} onResult={(r) => onResult(r, session)} onStart={() => setStarted(true)} onTab={setTab} fill={fill} /> : <Today onShow={(t) => { show(t); setStarted(true); setTab('chat') }} />}
         </div>
       </aside>
     </div>

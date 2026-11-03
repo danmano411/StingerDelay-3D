@@ -13,7 +13,6 @@ const CHIPS = [
 ]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
-const cid = Math.random().toString(36).slice(2)
 
 const locate = (): Promise<Origin | null> =>
   new Promise((res) => {
@@ -25,11 +24,13 @@ const locate = (): Promise<Origin | null> =>
     )
   })
 
-export function Chat({ onResult, onTab, fill }: {
+export function Chat({ onResult, onStart, onTab, fill }: {
   onResult: (r: ChatResponse) => void
+  onStart: () => void
   onTab: (t: 'chat' | 'today') => void
   fill: { text: string; n: number } | null
 }) {
+  const [cid] = useState(() => Math.random().toString(36).slice(2))
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -55,6 +56,7 @@ export function Chat({ onResult, onTab, fill }: {
   const send = async (m: string) => {
     m = m.trim()
     if (!m || busy) return
+    onStart()
     if (/plan my day|monday route/i.test(m)) onTab('today')
     setMsgs((x) => [...x, { role: 'user', text: m }])
     setText('')

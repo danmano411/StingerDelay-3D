@@ -157,7 +157,7 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
   <div>
     <div class="row" style="margin:0"><span class="clock" id="clock">08:00</span>
       <input id="tod" type="range" min="0" max="86399" step="60" value="34200" aria-label="Time of day" style="margin-left:16px">
-      <div class="seg" id="speed" style="margin-left:10px;min-width:170px"><button data-v="60">60×</button><button data-v="300" class="on">300×</button><button data-v="1200">1200×</button></div></div>
+      <div class="seg" id="speed" style="margin-left:10px;min-width:170px"><button data-v="1">1×</button><button data-v="5" class="on">5×</button><button data-v="10">10×</button></div></div>
     <div class="sunline" id="sunline">–</div>
   </div>
   <div class="dates">
@@ -184,7 +184,7 @@ const pairs = f => { const o = []; for (let i = 0; i < f.length; i += 2) o.push(
 const V3 = (x, y, h = 0) => new THREE.Vector3(x, h, -y);           // data: x east, y north  ->  three: y up
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const fmt = (v, d = 0) => v.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
-const state = { doy: 69, t: 9.5 * 3600, playing: true, speed: 300, batt: 300, strat: 'drive', roofs: 1, stor: 0, mode: 'solar',
+const state = { doy: 69, t: 9.5 * 3600, playing: true, speed: 5, batt: 300, strat: 'drive', roofs: 1, stor: 0, mode: 'solar',
                 mat: M.picks.findIndex(p => p.f === 'Si'), busScale: 3.5, labels: true };
 
 // ------------------------------------------------------------------ renderer / scene
@@ -564,6 +564,8 @@ canvas.addEventListener('pointermove', e => {
 
 // ------------------------------------------------------------------ Buzz Route bridge (see docs/contracts/sim_bridge_v0.md)
 const Q = new URLSearchParams(location.search), EMBED = Q.get('embed') === '1', DEMO = Q.get('demo') === '1';
+// One clock for buses and the walker. Tune with ?speed=N (simulated seconds per real second).
+if (+Q.get('speed') > 0) state.speed = +Q.get('speed');
 if (EMBED) document.documentElement.classList.add('embed');
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const LAT0 = T.meta.origin[0], LON0 = T.meta.origin[1], KX = 111320 * Math.cos(LAT0 * Math.PI / 180), KY = 110574;
@@ -612,12 +614,20 @@ function frameRoute(cx, cy, span) {
   if (REDUCED) { camera.position.copy(to); controls.target.copy(c); camAnim = null; return; }
   camAnim = { from: camera.position.clone(), to, tf: controls.target.clone(), tt: c, k: 0 };
 }
+let homeCam = null;
+function goHome() {
+  if (!homeCam) return;
+  const { pos, tgt } = homeCam; homeCam = null;
+  if (REDUCED) { camera.position.copy(pos); controls.target.copy(tgt); camAnim = null; return; }
+  camAnim = { from: camera.position.clone(), to: pos, tf: controls.target.clone(), tt: tgt, k: 0 };
+}
 function stopWalk() { W = null; walker.visible = false; controls.enabled = true; }
 function clearPlan() {
   stopWalk(); plan = null;
   planGrp.children.slice().forEach(o => { planGrp.remove(o); o.geometry?.dispose(); o.children.forEach(c => c.geometry?.dispose()); });
 }
 function showPlan(trace) {
+  if (!homeCam) homeCam = { pos: camera.position.clone(), tgt: controls.target.clone() };
   clearPlan();
   const raw = trace?.plan?.legs || [];
   const legs = raw.map(l => {
@@ -646,7 +656,7 @@ function showPlan(trace) {
 }
 function startWalk(speed) {
   if (!plan) return;
-  W = { el: 0, T: 25 / (+speed > 0 ? +speed : 1), lastPost: -1e9, hd: new THREE.Vector3(0, 0, -1) };
+  W = { el: 0, T: plan.total / (state.speed * (+speed > 0 ? +speed : 1)), lastPost: -1e9, hd: new THREE.Vector3(0, 0, -1) };
   walker.visible = true; controls.enabled = false; camAnim = null;
 }
 function walkTick(dt, now) {
@@ -682,7 +692,7 @@ function receive(msg) {
   try {
     switch (msg.type) {
       case 'plan.show': showPlan(msg.trace); break;
-      case 'plan.clear': clearPlan(); break;
+      case 'plan.clear': clearPlan(); goHome(); break;
       case 'walk.start': startWalk(msg.speed); break;
       case 'walk.stop': stopWalk(); break;
       case 'camera.focus': if (isFinite(msg.lat) && isFinite(msg.lon)) { const [x, y] = toXY([msg.lat, msg.lon]), c = V3(x, y);
