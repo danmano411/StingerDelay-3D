@@ -1,0 +1,129 @@
+:root {
+  --gt-navy: #003057;
+  --gt-gold: #eaaa00;
+  --gt-tech: #b3a369;
+  --ink: #0a1a28;
+  --paper: #f5f3eb;
+  --paper-muted: #e8e4d6;
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(234, 170, 0, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(179, 163, 105, 0.22), transparent 50%),
+    linear-gradient(165deg, var(--paper) 0%, #ebe6d8 100%);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--gt-navy);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--gt-tech);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--gt-navy);
+}
+
+.app-shell {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3rem;
+}
+
+.top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--gt-navy);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gt-navy);
+  text-decoration: none;
+}
+
+.brand span {
+  color: var(--gt-gold);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.nav-links a.active {
+  color: var(--gt-gold);
+  font-weight: 600;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lede {
+  max-width: 36rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.placeholder {
+  padding: 1.25rem;
+  border: 1px dashed var(--gt-tech);
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 0.85rem;
+}
+
+.placeholder strong {
+  font-family: var(--font-display);
+  color: var(--gt-navy);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gt-navy);
+  background: var(--gt-gold);
+  padding: 0.15rem 0.45rem;
+}

@@ -1,0 +1,24 @@
+A3 api scaffold — 2026-11-02
+
+Done:
+- FastAPI app at services/api/main.py with CORS for localhost:5173 and :8080
+  (also 127.0.0.1 variants).
+- Routers: GET /health; POST /trips/plan → 501 stub; GET /calendar/next mock;
+  GET /signals/x neutral stub (badge: secondary_social).
+- Optional import of contracts (PlanRequest / CalendarNextResponse / SocialFactor);
+  falls back to stub Pydantic / dicts when contracts not present (A1 parallel).
+- requirements.txt: fastapi uvicorn pydantic pytest httpx
+- README.md run/test instructions from services/api
+- tests/test_health.py via TestClient: health 200, empty plan 422, plan stub 501,
+  calendar mock, signals stub
+
+Verify:
+  cd services/api && pytest -q
+
+Not done (out of scope / later waves):
+- Real TripTrace planner (B2)
+- Google Calendar OAuth (C1)
+- Live X ingest (C4)
+- git commit/push (parent owns)
+
+Blockers: none

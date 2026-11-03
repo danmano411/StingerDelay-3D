@@ -1,0 +1,6 @@
+A6 iOS agent handshake — 2026-11-02
+- Expanded docs/IOS_AGENT.md: OpenAPI location, forbidden paths, env vars, curl examples (health / trips/plan / calendar / signals), payload guidance, TripTrace field list, replay + simulate-walk notes, v0 unauthenticated localhost auth note.
+- Created docs/contracts/local_plan_v0.json (JSON Schema draft 2020-12): { id, day, label, tripTrace, createdAt } with nested Quantiles / Leg / TripPlan / TripTrace / SocialFactor defs aligned to A1 field names.
+- Did not touch apps/web, services implementation, web-sim, or apps/ios.
+- No commit/push from this task (per dispatch instructions).
+- Ledger: A6 marked DONE.

@@ -1,0 +1,31 @@
+A4 normalize base data — 2026-11-02
+
+Script: python scripts/normalize_base.py (exit 0)
+Input:  data/base/routes.json
+Output: data/normalized/routes.json, stops.json, places.json
+
+Counts
+- routes: 5
+- stops:  73 (deduped by stop id across routes)
+- places: 7
+
+Blue
+- id=21 name=Blue synthetic=true
+
+Polyline downsample (dedupe consecutive + Douglas-Peucker eps=0.00007°)
+- Red:    349 -> 33
+- Blue:   351 -> 44
+- Green:  261 -> 19
+- Gold:   586 -> 48
+- Clough: 273 -> 23
+
+Place seeds (from stop names)
+- Klaus          -> stop 268 Klaus Building WB
+- Kendeda        -> stop 270 Kendeda Building
+- Student Center -> stop 305 Student Center
+- MARTA Midtown  -> stop 396 MARTA Midtown Station
+- West Village   -> stop 273 West Village
+- Clough         -> stop 392 Clough Commons
+- CRC            -> stop 285 CRC & Stamps Health
+
+Gate: stop count > 0; Blue flagged synthetic — PASS

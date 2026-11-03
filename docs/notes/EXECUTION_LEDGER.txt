@@ -17,7 +17,7 @@ A2 web scaffold ....... PENDING
 A3 api scaffold ....... PENDING
 A4 normalize data ..... PENDING
 A5 strip solar ........ PENDING
-A6 ios handshake ...... PENDING
+A6 ios handshake ...... DONE (docs/IOS_AGENT.md + local_plan_v0.json)
 B* .................... BLOCKED until A1+A4
 C* .................... BLOCKED until B2+B4
 
