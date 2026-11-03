@@ -578,17 +578,17 @@ const GOLDC = new THREE.Color(0xffc933).multiplyScalar(1.6), WHITEC = new THREE.
 const noDepth = (o, ro) => { o.material.depthTest = false; o.renderOrder = ro; return o; };
 const walker = new THREE.Group(); walker.visible = false; scene.add(walker);
 // person built from simple shapes: sphere head, capsule torso, swinging legs and arms (+x is forward), exaggerated scale
-const capsule = new THREE.Group(); capsule.scale.setScalar(1.6);
+const capsule = new THREE.Group(); capsule.scale.setScalar(.8);
 const pm = (hex, em) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: em, roughness: .6 });
 const part = (geo, mat, x, y, z, parent) => { const m = noDepth(new THREE.Mesh(geo, mat), 13); m.position.set(x, y, z); parent.add(m); return m; };
 const limb = (len, r, mat, x, y, z) => { const p = new THREE.Group(); p.position.set(x, y, z); part(new THREE.CapsuleGeometry(r, len, 4, 8).translate(0, -(len / 2 + r), 0), mat, 0, 0, 0, p); capsule.add(p); return p; };
-const mSkin = pm(0xffd9b0, .5), mShirt = pm(0xffc933, .9), mPants = pm(0x1c4f8f, .7);
+const mSkin = pm(0xd9a878, .12), mShirt = pm(0xd9a400, .18), mPants = pm(0x1c4f8f, .2);
 const torso = part(new THREE.CapsuleGeometry(2.8, 6, 4, 10), mShirt, 0, 15, 0, capsule);
 part(new THREE.SphereGeometry(3.2, 16, 12), mSkin, 0, 22, 0, capsule);
 const legL = limb(6, 1.6, mPants, 0, 11, 1.7), legR = limb(6, 1.6, mPants, 0, 11, -1.7);
 const armL = limb(5, 1.2, mShirt, 0, 19, 4.4), armR = limb(5, 1.2, mShirt, 0, 19, -4.4);
 let stride = 0;
-const wring = noDepth(new THREE.Mesh(new THREE.RingGeometry(10, 13, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: GOLDC, toneMapped: false, transparent: true, opacity: .85, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })), 12);
+const wring = noDepth(new THREE.Mesh(new THREE.RingGeometry(10, 13, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: GOLDC, toneMapped: false, transparent: true, opacity: .5, side: THREE.DoubleSide, depthWrite: false })), 12);
 wring.position.y = 1.5;
 const busMark = new THREE.Mesh(new THREE.BoxGeometry(24, 7, 8).translate(0, 3.5, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false })); busMark.visible = false;
 walker.add(busMark, capsule, wring);
@@ -667,10 +667,10 @@ function walkTick(dt, now) {
   else { const b = Math.sin(now / 500); legL.rotation.z = legR.rotation.z = 0; armL.rotation.z = armR.rotation.z = b * .05; torso.position.y = 15 + b * .3; }
   const wait = l.kind === 'wait';
   wring.scale.setScalar(1 + (wait ? .35 * Math.sin(now / 160) : .08 * Math.sin(now / 300)));
-  wring.material.opacity = wait ? .6 + .35 * Math.sin(now / 160) : .85;
+  wring.material.opacity = wait ? .45 + .25 * Math.sin(now / 160) : .5;
   const k = REDUCED ? 1 : 1 - Math.exp(-3 * dt);
-  camera.position.lerp(pos.clone().addScaledVector(W.hd, -62).add(new THREE.Vector3(0, 40, 0)), k);
-  controls.target.lerp(pos.clone().add(new THREE.Vector3(0, 18, 0)), k);
+  camera.position.lerp(pos.clone().addScaledVector(W.hd, -75).add(new THREE.Vector3(0, 60, 0)), k);
+  controls.target.lerp(pos.clone().add(new THREE.Vector3(0, 8, 0)), k);
   const fin = W.el >= W.T;
   if (fin || now - W.lastPost >= 250) { W.lastPost = now; const [la, lo] = toLL(x, y);
     post({ type: 'walk.progress', leg_index: i, leg_kind: l.kind, fraction: fin ? 1 : fr, lat: la, lon: lo }); }

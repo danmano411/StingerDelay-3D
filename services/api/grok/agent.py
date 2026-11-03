@@ -2,7 +2,7 @@
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -90,10 +90,22 @@ def _fmt(dt: datetime) -> str:
     return dt.astimezone(TZ).strftime("%I:%M %p").lstrip("0")
 
 
+class OffCampus(Exception):
+    pass
+
+
+OFF_MSG = "It looks like you're off campus (more than 3 km from Georgia Tech). Where should I start from?"
+OFF_CLAR = {"question": "Where should I start from?", "options": ["Student Center", "Klaus", "CRC"]}
+
+
 def _plan(st: dict, origin_ll, now):
     dest = st["dest"]
     org = st["origin"] or _place(DEFAULT_ORIGIN)
+    st["origin_default"] = not st["origin"] and not origin_ll
     if origin_ll and not st["origin"]:
+        c0 = _place(DEFAULT_ORIGIN)
+        if _eng().hav((origin_ll["lat"], origin_ll["lon"]), (c0["lat"], c0["lon"])) > 3000:
+            raise OffCampus()
         org = {"lat": origin_ll["lat"], "lon": origin_ll["lon"], "name": "your location", "place_id": None}
     c = PlanConstraints(origin=_ref(org), destination=_ref(dest), arrive_by=st["arrive_by"],
                         prefs=PlanPrefs(avoid_stairs=st["avoid_stairs"]))
@@ -119,6 +131,17 @@ def _day(now, avoid=False):
         prev = p or prev
         out.append(row)
     return out
+
+
+def week_for(user):
+    from routers.calendar import get_week
+    return get_week(user)
+
+
+def week_row(e):
+    ev = e["event"]
+    return {"title": ev["title"], "location": ev["place"], "start": ev["start"], "end": ev.get("end"), "source": None,
+            "mode": e["recommendation"], "leave_at": e["leave_by"], "trace": e["trace"]}
 
 
 def _day_reply(evs, now):
@@ -193,7 +216,10 @@ def _hhmm(s, now):
 
 def local_chat(cid, msg, now, origin_ll):
     st = state.get(cid)
-    p = parser.parse(msg, now)
+    p = parser.parse(msg, st.get("now") or now)
+    if p["now"]:
+        st["now"] = p["now"]  # stated "right now it's 6" sticks for follow-ups
+    now = st.get("now") or now
     it = p["intent"]
     if it == "stop":
         return _result(cid, "Okay, stopped walking.", "local", "stop_walk", st["trace"], verified=True)
@@ -202,6 +228,14 @@ def local_chat(cid, msg, now, origin_ll):
             return _result(cid, "I don't have a plan to walk yet. Tell me where you want to go and by when.", "local", verified=True)
         r, v = _check(_first_instruction(st["trace"]), st["trace"])
         return _result(cid, r, "local", "walk", st["trace"], verified=v)
+    if it == "week":
+        w = week_for("demo")
+        days = [p["day"]] if p["day"] else list(w["days"])
+        evs = [dict(week_row(e), weekday=d) for d in days for e in w["days"].get(d, [])]
+        txt = "; ".join(f"{d.capitalize()}: " + (", ".join(f"{e['event']['title']} at {e['event']['place']}"
+                        + (f" ({e['recommendation']})" if e["recommendation"] else "") for e in w["days"].get(d, [])) or "free")
+                        for d in days)
+        return _result(cid, f"{w['source'].capitalize()} week. {txt}.", "local", events=evs, verified=True)
     if it == "calendar":
         evs = _day(now, st["avoid_stairs"])
         return _result(cid, _day_reply(evs, now), "local", events=evs, verified=True)
@@ -214,14 +248,22 @@ def local_chat(cid, msg, now, origin_ll):
         return _result(cid, "Sure. Where do you want to go, and by when?", "local", verified=True)
     try:
         tr = _plan(st, origin_ll, now)
+    except OffCampus:
+        return _result(cid, OFF_MSG, "local", clar=OFF_CLAR, verified=True)
     except Exception as e:
         return _result(cid, f"I couldn't plan that route ({type(e).__name__}).", "local", verified=True)
-    head = f"Planning from {st['origin_name']} to {st['dest']['name']}"
+    oname = st["origin_name"] + (" (default start)" if st.get("origin_default") else "")
+    head = f"Planning from {oname} to {st['dest']['name']}"
     if ch:
         head += " (updated: " + ", ".join(ch) + ")"
     t = _verify().template(tr)
-    base = f"Planning from {st['origin_name']} to {st['dest']['name']}. {t}"
-    r, v = _check(f"{head}. {t}", tr)
+    base = f"Planning from {oname} to {st['dest']['name']}. {t}"
+    pl = tr.plan
+    rng = (f" Arrival range {_fmt(pl.leave_at + timedelta(seconds=pl.total_s.p10))} to "
+           f"{_fmt(pl.leave_at + timedelta(seconds=pl.total_s.p90))}.")
+    r, v = _check(f"{head}. {t}{rng}", tr)
+    if not v:
+        r, v = _check(f"{head}. {t}", tr)
     if not v:  # change list may carry unverified clock times; keep origin/dest wording
         r, v = _check(base, tr)
         if not v:
@@ -239,6 +281,8 @@ TOOLS = [
     {"type": "function", "name": "walk_path", "description": "Start guided walking of the current plan.", "parameters": {"type": "object", "properties": {}}},
     {"type": "function", "name": "stop_walk", "description": "Stop walking.", "parameters": {"type": "object", "properties": {}}},
     {"type": "function", "name": "get_day_plan", "description": "Plan today's calendar trips.", "parameters": {"type": "object", "properties": {}}},
+    {"type": "function", "name": "get_week_plan", "description": "Weekly routes, optionally for one weekday.",
+     "parameters": {"type": "object", "properties": {"day": {"type": "string"}}}},
     {"type": "function", "name": "explain_plan", "description": "Facts about the current plan.", "parameters": {"type": "object", "properties": {}}},
 ]
 SYSTEM = ("You are the campus trip assistant. Use tools for anything about places, buses or times. "
@@ -262,7 +306,11 @@ def grok_chat(cid, msg, now, origin_ll):
                 return {"error": q["question"]}
             if not st["dest"]:
                 return {"error": "no destination yet; ask the user"}
-            tr = _plan(st, origin_ll, now)
+            try:
+                tr = _plan(st, origin_ll, now)
+            except OffCampus:
+                out["clar"] = OFF_CLAR
+                return {"error": OFF_MSG}
             out["action"] = "show_path"
             return {"changed": ch, "from": st["origin_name"], "to": st["dest"]["name"], "summary": _verify().template(tr)}
         if name == "walk_path":
@@ -276,6 +324,11 @@ def grok_chat(cid, msg, now, origin_ll):
         if name == "get_day_plan":
             out["events"] = _day(now, st["avoid_stairs"])
             return {"summary": _day_reply(out["events"], now)}
+        if name == "get_week_plan":
+            w = week_for("demo")
+            days = [a["day"].lower()] if a.get("day") else list(w["days"])
+            out["events"] = [dict(week_row(e), weekday=d) for d in days for e in w["days"].get(d, [])]
+            return {"days": {d: [f"{r['title']} at {r['location']}: {r['mode']}" for r in out["events"] if r["weekday"] == d] for d in days}}
         if name == "explain_plan":
             return {"facts": st["trace"].plan.explanation_facts if st["trace"] else "no plan yet"}
         return {"error": "unknown tool"}

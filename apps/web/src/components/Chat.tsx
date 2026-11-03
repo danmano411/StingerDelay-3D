@@ -113,7 +113,7 @@ export function Chat({ onResult, onTab, fill }: {
     <div className="chat">
       <p className="status">{line}</p>
       {offline && <p className="err">Start the API: run the services/api server on http://127.0.0.1:8000, then try again.</p>}
-      <div className="micwrap">
+      <div className={`micwrap ${msgs.length ? 'compact' : ''}`}>
         <button type="button" className={`mic ${listening ? 'on' : ''}`} onClick={talk} aria-pressed={listening} aria-label="Tap to talk">
           <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <rect x="9" y="3" width="6" height="12" rx="3" />

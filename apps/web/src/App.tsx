@@ -39,7 +39,7 @@ export default function App() {
     <div className="app">
       <Sim ref={sim} onPick={(name) => { setTab('chat'); setOpen(true); setFill({ text: `Get me to ${name}`, n: Date.now() }) }} onProgress={setProg} onDone={() => { setWalking(false); setArrived(true) }} />
       <aside className={`panel ${open ? 'open' : ''}`}>
-        <button className="grab" onClick={() => setOpen(!open)} aria-expanded={open}>StingerDelay-3D</button>
+        <button className="grab" onClick={() => setOpen(!open)} aria-expanded={open}>Buzz Route</button>
         <div className="tabs" role="tablist">
           {(['chat', 'today'] as const).map((k) => (
             <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{k === 'chat' ? 'Assistant' : 'Today'}</button>

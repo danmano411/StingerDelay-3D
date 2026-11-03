@@ -23,6 +23,10 @@ class FakeEngine:
                 return {"place_id": key, "name": n, "lat": la, "lon": lo, "score": 1.0}
 
     @staticmethod
+    def hav(a, b):
+        return 0 if abs(a[0] - b[0]) < .1 else 50000
+
+    @staticmethod
     def list_places():
         return [{"name": n} for n, _, _ in PLACES.values()]
 
@@ -30,7 +34,7 @@ class FakeEngine:
     def plan(c, now=None):
         leave = c.arrive_by - timedelta(minutes=10) if c.arrive_by else now
         leg = NS(kind="walk", label="Walk north")
-        p = NS(legs=[leg], leave_at=leave, explanation_facts=["walk"])
+        p = NS(legs=[leg], leave_at=leave, total_s=NS(p10=500, p90=700),  explanation_facts=["walk"])
         return NS(plan=p, model_dump=lambda mode=None: {"arrive_by": str(c.arrive_by), "stairs": c.prefs.avoid_stairs,
                                                          "origin": c.origin.place_id, "dest": c.destination.place_id})
 
@@ -96,3 +100,21 @@ def test_status_and_transcribe_without_key(client):
     assert client.get("/grok/status").json()["key_present"] is False
     assert client.post("/grok/transcribe", files={"file": ("a.webm", b"x")}).status_code == 503
     assert client.get("/calendar/day").json()["source"] == "sample"
+
+
+def test_stated_now_and_range(client):
+    r = say(client, "I want to get to Klaus by 8:30, and right now it's 6")
+    assert r["action"] == "show_path" and "2026-11-02" in r["trace"]["arrive_by"] and "8:30" in r["trace"]["arrive_by"]
+
+
+def test_week_intent(client, monkeypatch):
+    monkeypatch.setattr(agent, "week_for", lambda u: {"source": "sample", "days": {"monday": [
+        {"event": {"title": "X", "place": "Klaus", "start": "s", "end": None}, "recommendation": "walk", "leave_by": "l", "trace": None}]}})
+    r = say(client, "what's my Monday route")
+    assert r["events"][0]["weekday"] == "monday" and "Monday" in r["reply"]
+
+
+def test_off_campus(client):
+    r = client.post("/grok/chat", json={"conversation_id": "o", "message": "get me to Klaus by 8:30", "now": NOW,
+                                        "origin": {"lat": 34.2, "lon": -84.0}}).json()
+    assert r["action"] is None and "off campus" in r["reply"] and r["clarification"]

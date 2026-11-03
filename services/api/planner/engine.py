@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from contracts import Leg, LegKind, PlanConstraints, Quantiles, TripPlan, TripTrace
+from planner.walkgraph import walk_path
 from predictor import MODEL_ID, mae_for_eta
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -213,6 +214,9 @@ def _build(cand, ev, o, dst, leave, deadline, speed, note, dname):
         mode = "bus"
     if note:
         facts.append(note)
+    for lg in legs:  # display geometry only; timings/distances untouched
+        if lg.kind in (LegKind.walk, LegKind.transfer_walk) and len(lg.path) == 2:
+            lg.path = walk_path(*lg.path[0], *lg.path[1])
     return TripPlan(legs=legs, total_s=Quantiles(p10=round(p10, 1), p50=round(p50, 1), p90=round(p90, 1)),
                     leave_at=leave, arrive_at=leave + timedelta(seconds=p50), p_on_time=p_on,
                     p_catch=ev["p_catch"], explanation_facts=facts, mode=mode)

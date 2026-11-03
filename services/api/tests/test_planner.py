@@ -47,3 +47,10 @@ def test_day_plan_needs_place():
         {"title": "B", "place": "zzzz nowhere", "start": "2026-11-03T14:00:00+00:00"}]})
     e = r.json()["entries"]
     assert e[0]["trace"] and e[1]["needs_place"]
+
+
+def test_walk_path_follows_roads():
+    from planner.walkgraph import walk_path
+    a, b = resolve_place("Klaus"), resolve_place("CRC")
+    p = walk_path(a["lat"], a["lon"], b["lat"], b["lon"])
+    assert len(p) > 2 and p[0] == [a["lat"], a["lon"]] and p[-1] == [b["lat"], b["lon"]]

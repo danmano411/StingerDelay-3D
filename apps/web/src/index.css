@@ -66,3 +66,10 @@ textarea{width:100%;background:#0b1117;border:1px solid var(--line);border-radiu
 .seg [aria-checked=true]{background:var(--navy);color:var(--ink);font-weight:700}
 .trips .rec{color:var(--gold);font-weight:600}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Keep the conversation in view once it starts */
+.micwrap.compact { flex-direction: row; justify-content: center; gap: 12px; }
+.micwrap.compact .mic { width: 56px; height: 56px; }
+.micwrap.compact .mic span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.micwrap.compact .mic svg { width: 24px; height: 24px; }
+.micwrap.compact .from { margin: 0; text-align: left; }
