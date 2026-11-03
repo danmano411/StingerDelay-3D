@@ -128,3 +128,13 @@ Walk to stop → wait → ride → (optional transfer) → final walk
 
 **End of handoff.**  
 Start from the hierarchy, keep the engine deterministic, and make the Grok Bot helper (Voice + Calendar + secondary X) the user-facing layer.
+
+## 10. Base data now in repo
+
+Non-solar baseplate from the previous project:
+
+- `data/base/routes.json` — Stinger route polylines and colors
+- `data/base/campus.json` — campus building / geometry data
+- `reference/stinger-delay-summary.md` — model comparison results (44–54% better than TransLoc)
+
+The full Stinger Delay source (GPS logs, notebooks, trained model artifacts) lives in the original zip and at https://github.com/gt-big-data/stinger-delay. Use these files as the starting point for the planner and predictor. No solar content was imported.
