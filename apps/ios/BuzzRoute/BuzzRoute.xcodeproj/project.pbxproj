@@ -24,6 +24,29 @@
 		};
 /* End PBXFrameworksBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A10000000000000000000010 /* Copy Twin Folder */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Twin Folder";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Twin/index.html",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nSRC=\"${SRCROOT}/TwinPayload/Twin\"\nDEST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Twin\"\nif [ ! -d \"$SRC\" ]; then\n  echo \"error: Twin payload missing at $SRC\" >&2\n  exit 1\nfi\nrm -rf \"$DEST\"\nmkdir -p \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncp -R \"$SRC\" \"$DEST\"\necho \"Copied Twin to $DEST\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXGroup section */
 		A10000000000000000000001 = {
 			isa = PBXGroup;
@@ -50,6 +73,7 @@
 			buildPhases = (
 				A10000000000000000000006 /* Sources */,
 				A10000000000000000000007 /* Frameworks */,
+				A10000000000000000000010 /* Copy Twin Folder */,
 				A10000000000000000000008 /* Resources */,
 			);
 			buildRules = (
