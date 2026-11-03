@@ -216,10 +216,16 @@ def local_chat(cid, msg, now, origin_ll):
         tr = _plan(st, origin_ll, now)
     except Exception as e:
         return _result(cid, f"I couldn't plan that route ({type(e).__name__}).", "local", verified=True)
-    head = f"From {st['origin_name']} to {st['dest']['name']}"
+    head = f"Planning from {st['origin_name']} to {st['dest']['name']}"
     if ch:
         head += " (updated: " + ", ".join(ch) + ")"
-    r, v = _check(f"{head}. {_verify().template(tr)}", tr)
+    t = _verify().template(tr)
+    base = f"Planning from {st['origin_name']} to {st['dest']['name']}. {t}"
+    r, v = _check(f"{head}. {t}", tr)
+    if not v:  # change list may carry unverified clock times; keep origin/dest wording
+        r, v = _check(base, tr)
+        if not v:
+            r = base
     return _result(cid, r, "local", "show_path", tr, verified=v)
 
 

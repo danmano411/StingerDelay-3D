@@ -33,6 +33,12 @@ def import_ics(body: str | dict = Body(...)) -> dict:
 def calendar_next() -> dict:
     now = datetime.now(cal.TZ)
     e = cal.next_event(now)
+    if e:
+        try:
+            from planner.engine import resolve_place
+            e = dict(e, place_id=(resolve_place(e["location"]) or {}).get("place_id"))
+        except Exception:
+            pass
     return {"source": e["source"] if e else "none", "synthetic": not cal.IMPORTED, "event": e,
             "as_of": now.astimezone(timezone.utc).isoformat()}
 

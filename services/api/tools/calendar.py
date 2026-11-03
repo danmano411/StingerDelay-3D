@@ -53,4 +53,5 @@ def events(now: datetime) -> list[dict]:
 
 
 def next_event(now: datetime):
-    return next((e for e in events(now) if datetime.fromisoformat(e["end"]) > now), None)
+    evs = events(now)
+    return next((e for e in evs if datetime.fromisoformat(e["end"]) > now), None if IMPORTED else evs[0])  # sample demo never runs dry

@@ -1,388 +1,1076 @@
-openapi: 3.0.3
-info:
-  title: StingerDelay-3D API
-  description: |
-    Shared planner API for web and iOS. Contract version **v0**.
-
-    Rules:
-    - Every displayed/spoken number must come from `TripTrace.allowed_numbers`.
-    - Social/X factors only widen uncertainty and require a badge.
-    - Payloads stay compact; geometry is referenced by id, not inline OSM.
-  version: "0.0.0"
-  x-contract-version: v0
-
-servers:
-  - url: http://127.0.0.1:8000
-    description: Local FastAPI
-
-tags:
-  - name: health
-  - name: trips
-  - name: calendar
-  - name: signals
-
-paths:
-  /health:
-    get:
-      tags: [health]
-      summary: Liveness check
-      operationId: getHealth
-      responses:
-        "200":
-          description: Service is up
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-
-  /trips/plan:
-    post:
-      tags: [trips]
-      summary: Plan a trip; returns a TripTrace
-      operationId: postTripsPlan
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PlanRequest"
-            example:
-              constraints:
-                origin:
-                  lat: 33.7771
-                  lon: -84.3960
-                  place_id: klaus
-                destination:
-                  lat: 33.7745
-                  lon: -84.3987
-                  place_id: kendeda
-                arrive_by: "2026-11-03T08:30:00-05:00"
-                prefs:
-                  avoid_stairs: true
-                  walk_speed_mps: 1.4
-      responses:
-        "200":
-          description: Chosen plan + alternatives as TripTrace
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlanResponse"
-        "422":
-          description: Validation error (missing OD, bad prefs, etc.)
-
-  /calendar/next:
-    get:
-      tags: [calendar]
-      summary: Next calendar / class event (mock when no OAuth)
-      operationId: getCalendarNext
-      responses:
-        "200":
-          description: Next event or null
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CalendarNextResponse"
-
-  /signals/x:
-    get:
-      tags: [signals]
-      summary: Secondary X / social uncertainty factor
-      operationId: getSignalsX
-      parameters:
-        - name: place_id
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: lat
-          in: query
-          required: false
-          schema:
-            type: number
-            format: double
-        - name: lon
-          in: query
-          required: false
-          schema:
-            type: number
-            format: double
-      responses:
-        "200":
-          description: Optional SocialFactor (badge required when present)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SignalsXResponse"
-
-components:
-  schemas:
-    Quantiles:
-      type: object
-      additionalProperties: false
-      required: [p10, p50, p90]
-      properties:
-        p10:
-          type: number
-          minimum: 0
-          description: 10th percentile seconds
-        p50:
-          type: number
-          minimum: 0
-          description: Median seconds
-        p90:
-          type: number
-          minimum: 0
-          description: 90th percentile seconds
-
-    PlaceRef:
-      type: object
-      additionalProperties: false
-      required: [lat, lon]
-      properties:
-        lat:
-          type: number
-          format: double
-          minimum: -90
-          maximum: 90
-        lon:
-          type: number
-          format: double
-          minimum: -180
-          maximum: 180
-        place_id:
-          type: string
-          nullable: true
-
-    PlanPrefs:
-      type: object
-      additionalProperties: false
-      properties:
-        avoid_stairs:
-          type: boolean
-          default: false
-        walk_speed_mps:
-          type: number
-          exclusiveMinimum: 0
-          default: 1.4
-
-    PlanConstraints:
-      type: object
-      additionalProperties: false
-      required: [origin, destination]
-      properties:
-        origin:
-          $ref: "#/components/schemas/PlaceRef"
-        destination:
-          $ref: "#/components/schemas/PlaceRef"
-        arrive_by:
-          type: string
-          format: date-time
-          nullable: true
-        depart_at:
-          type: string
-          format: date-time
-          nullable: true
-        prefs:
-          $ref: "#/components/schemas/PlanPrefs"
-
-    LegKind:
-      type: string
-      enum: [walk, wait, ride, transfer_walk]
-
-    Leg:
-      type: object
-      additionalProperties: false
-      required: [kind, duration_s_p50, label]
-      properties:
-        kind:
-          $ref: "#/components/schemas/LegKind"
-        duration_s_p50:
-          type: number
-          minimum: 0
-        label:
-          type: string
-        route_id:
-          type: string
-          nullable: true
-        from_stop_id:
-          type: string
-          nullable: true
-        to_stop_id:
-          type: string
-          nullable: true
-        geometry_ref:
-          type: string
-          nullable: true
-          description: Id of polyline asset; not full OSM geometry
-
-    TripPlan:
-      type: object
-      additionalProperties: false
-      required: [legs, total_s, leave_at, arrive_at, p_on_time]
-      properties:
-        legs:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/Leg"
-        total_s:
-          $ref: "#/components/schemas/Quantiles"
-        leave_at:
-          type: string
-          format: date-time
-        arrive_at:
-          type: string
-          format: date-time
-        p_on_time:
-          type: number
-          minimum: 0
-          maximum: 1
-        p_catch:
-          type: number
-          minimum: 0
-          maximum: 1
-          nullable: true
-        explanation_facts:
-          type: array
-          items:
-            type: string
-
-    SocialFactor:
-      type: object
-      additionalProperties: false
-      required: [source, badge_required, spread_multiplier, label]
-      properties:
-        source:
-          type: string
-        badge_required:
-          type: boolean
-        spread_multiplier:
-          type: number
-          exclusiveMinimum: 0
-        label:
-          type: string
-
-    TripTrace:
-      type: object
-      additionalProperties: false
-      required:
-        - plan
-        - allowed_numbers
-        - model_id
-        - confidence_horizon_s
-        - verification_version
-      properties:
-        plan:
-          $ref: "#/components/schemas/TripPlan"
-        alternatives:
-          type: array
-          items:
-            $ref: "#/components/schemas/TripPlan"
-        allowed_numbers:
-          type: array
-          items:
-            oneOf:
-              - type: number
-              - type: integer
-          description: Only these numbers may be spoken/displayed
-        model_id:
-          type: string
-          example: eta_decile_lookup_v0
-        confidence_horizon_s:
-          type: number
-          minimum: 0
-        social_factor:
-          allOf:
-            - $ref: "#/components/schemas/SocialFactor"
-          nullable: true
-        verification_version:
-          type: string
-          example: v0
-
-    PlanRequest:
-      type: object
-      additionalProperties: false
-      required: [constraints]
-      properties:
-        constraints:
-          $ref: "#/components/schemas/PlanConstraints"
-
-    PlanResponse:
-      type: object
-      additionalProperties: false
-      required: [trace, contract_version]
-      properties:
-        trace:
-          $ref: "#/components/schemas/TripTrace"
-        contract_version:
-          type: string
-          example: v0
-
-    HealthResponse:
-      type: object
-      additionalProperties: false
-      required: [status, service, contract_version]
-      properties:
-        status:
-          type: string
-          example: ok
-        service:
-          type: string
-          example: stingerdelay-3d-api
-        contract_version:
-          type: string
-          example: v0
-
-    CalendarEvent:
-      type: object
-      additionalProperties: false
-      required: [id, title, start, end, source]
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        start:
-          type: string
-          format: date-time
-        end:
-          type: string
-          format: date-time
-        place_id:
-          type: string
-          nullable: true
-        lat:
-          type: number
-          nullable: true
-        lon:
-          type: number
-          nullable: true
-        source:
-          type: string
-          enum: [mock, google]
-
-    CalendarNextResponse:
-      type: object
-      additionalProperties: false
-      required: [contract_version]
-      properties:
-        event:
-          allOf:
-            - $ref: "#/components/schemas/CalendarEvent"
-          nullable: true
-        contract_version:
-          type: string
-          example: v0
-
-    SignalsXResponse:
-      type: object
-      additionalProperties: false
-      required: [contract_version]
-      properties:
-        factor:
-          allOf:
-            - $ref: "#/components/schemas/SocialFactor"
-          nullable: true
-        contract_version:
-          type: string
-          example: v0
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StingerDelay-3D API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Health",
+        "operationId": "get_health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trips/plan": {
+      "post": {
+        "tags": [
+          "trips"
+        ],
+        "summary": "Plan Trip",
+        "operationId": "plan_trip_trips_plan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places": {
+      "get": {
+        "tags": [
+          "trips"
+        ],
+        "summary": "Places",
+        "operationId": "places_places_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Places Places Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/day/plan": {
+      "post": {
+        "tags": [
+          "day"
+        ],
+        "summary": "Day Plan",
+        "operationId": "day_plan_day_plan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DayRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Day Plan Day Plan Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar/status": {
+      "get": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Status",
+        "operationId": "status_calendar_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Status Calendar Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar/import": {
+      "post": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Import Ics",
+        "operationId": "import_ics_calendar_import_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Import Ics Calendar Import Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar/next": {
+      "get": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Calendar Next",
+        "operationId": "calendar_next_calendar_next_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calendar Next Calendar Next Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calendar/day": {
+      "get": {
+        "tags": [
+          "calendar"
+        ],
+        "summary": "Calendar Day",
+        "operationId": "calendar_day_calendar_day_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Calendar Day Calendar Day Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signals/x": {
+      "get": {
+        "tags": [
+          "signals"
+        ],
+        "summary": "Signals X",
+        "operationId": "signals_x_signals_x_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Signals X Signals X Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/signals/x/feed": {
+      "get": {
+        "tags": [
+          "signals"
+        ],
+        "summary": "X Feed",
+        "operationId": "x_feed_signals_x_feed_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response X Feed Signals X Feed Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grok/chat": {
+      "post": {
+        "tags": [
+          "grok"
+        ],
+        "summary": "Chat",
+        "operationId": "chat_grok_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Chat Grok Chat Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grok/status": {
+      "get": {
+        "tags": [
+          "grok"
+        ],
+        "summary": "Status",
+        "operationId": "status_grok_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Status Grok Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grok/transcribe": {
+      "post": {
+        "tags": [
+          "grok"
+        ],
+        "summary": "Transcribe",
+        "operationId": "transcribe_grok_transcribe_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_transcribe_grok_transcribe_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Transcribe Grok Transcribe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_transcribe_grok_transcribe_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_transcribe_grok_transcribe_post"
+      },
+      "ChatIn": {
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "now": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Now"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Origin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "message"
+        ],
+        "title": "ChatIn"
+      },
+      "DayEvent": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "place",
+          "start"
+        ],
+        "title": "DayEvent"
+      },
+      "DayRequest": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DayEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "start_place": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Place"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events"
+        ],
+        "title": "DayRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Leg": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/LegKind"
+          },
+          "duration_s_p50": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Duration S P50",
+            "description": "Median leg duration (s)"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id"
+          },
+          "from_stop_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Stop Id"
+          },
+          "to_stop_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Stop Id"
+          },
+          "geometry_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geometry Ref",
+            "description": "Id of polyline/geometry asset; not inline OSM"
+          },
+          "path": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Path",
+            "description": "[[lat,lon],...]"
+          },
+          "distance_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distance M"
+          },
+          "estimate": {
+            "type": "boolean",
+            "title": "Estimate",
+            "default": false
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "duration_s_p50",
+          "label"
+        ],
+        "title": "Leg",
+        "description": "One PRT segment: walk \u2192 wait \u2192 ride \u2192 (transfer) \u2192 walk."
+      },
+      "LegKind": {
+        "type": "string",
+        "enum": [
+          "walk",
+          "wait",
+          "ride",
+          "transfer_walk"
+        ],
+        "title": "LegKind"
+      },
+      "Origin": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "title": "Lat"
+          },
+          "lon": {
+            "type": "number",
+            "title": "Lon"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "Origin"
+      },
+      "PlaceRef": {
+        "properties": {
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat"
+          },
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon"
+          },
+          "place_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "lat",
+          "lon"
+        ],
+        "title": "PlaceRef",
+        "description": "Origin or destination coordinate, optionally tied to a known place."
+      },
+      "PlanConstraints": {
+        "properties": {
+          "origin": {
+            "$ref": "#/components/schemas/PlaceRef"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/PlaceRef"
+          },
+          "arrive_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrive By",
+            "description": "ISO-8601 arrive-by deadline"
+          },
+          "depart_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Depart At",
+            "description": "ISO-8601 depart-at time; omit for leave-now"
+          },
+          "prefs": {
+            "$ref": "#/components/schemas/PlanPrefs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "origin",
+          "destination"
+        ],
+        "title": "PlanConstraints",
+        "description": "Request constraints for POST /trips/plan."
+      },
+      "PlanPrefs": {
+        "properties": {
+          "avoid_stairs": {
+            "type": "boolean",
+            "title": "Avoid Stairs",
+            "default": false
+          },
+          "walk_speed_mps": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Walk Speed Mps",
+            "description": "Walking speed in m/s",
+            "default": 1.4
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PlanPrefs",
+        "description": "Traveler preferences applied by the deterministic planner."
+      },
+      "PlanRequest": {
+        "properties": {
+          "constraints": {
+            "$ref": "#/components/schemas/PlanConstraints"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "constraints"
+        ],
+        "title": "PlanRequest",
+        "description": "Body for POST /trips/plan."
+      },
+      "PlanResponse": {
+        "properties": {
+          "trace": {
+            "$ref": "#/components/schemas/TripTrace"
+          },
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version",
+            "default": "v0"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trace"
+        ],
+        "title": "PlanResponse",
+        "description": "Successful plan response \u2014 a TripTrace."
+      },
+      "Quantiles": {
+        "properties": {
+          "p10": {
+            "type": "number",
+            "title": "P10",
+            "description": "10th percentile duration in seconds"
+          },
+          "p50": {
+            "type": "number",
+            "title": "P50",
+            "description": "Median duration in seconds"
+          },
+          "p90": {
+            "type": "number",
+            "title": "P90",
+            "description": "90th percentile duration in seconds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "title": "Quantiles",
+        "description": "Duration / ETA quantiles in seconds."
+      },
+      "SocialFactor": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "badge_required": {
+            "type": "boolean",
+            "title": "Badge Required",
+            "default": true
+          },
+          "spread_multiplier": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Spread Multiplier"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "spread_multiplier",
+          "label"
+        ],
+        "title": "SocialFactor",
+        "description": "Secondary X/social uncertainty; must be badged when applied."
+      },
+      "TripPlan": {
+        "properties": {
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/Leg"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Legs"
+          },
+          "total_s": {
+            "$ref": "#/components/schemas/Quantiles"
+          },
+          "leave_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Leave At",
+            "description": "ISO-8601 leave time"
+          },
+          "arrive_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Arrive At",
+            "description": "ISO-8601 arrive time"
+          },
+          "p_on_time": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "P On Time"
+          },
+          "p_catch": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P Catch",
+            "description": "Probability of catching the bus"
+          },
+          "explanation_facts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Explanation Facts"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "description": "walk_only | bus",
+            "default": "walk_only"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "legs",
+          "total_s",
+          "leave_at",
+          "arrive_at",
+          "p_on_time"
+        ],
+        "title": "TripPlan",
+        "description": "A single planned itinerary with confidence quantiles."
+      },
+      "TripTrace": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/TripPlan"
+          },
+          "alternatives": {
+            "items": {
+              "$ref": "#/components/schemas/TripPlan"
+            },
+            "type": "array",
+            "title": "Alternatives"
+          },
+          "allowed_numbers": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Allowed Numbers"
+          },
+          "model_id": {
+            "type": "string",
+            "title": "Model Id"
+          },
+          "confidence_horizon_s": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Confidence Horizon S"
+          },
+          "social_factor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SocialFactor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verification_version": {
+            "type": "string",
+            "title": "Verification Version",
+            "default": "v0"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "ok | at_risk",
+            "default": "ok"
+          },
+          "origin_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Name"
+          },
+          "destination_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "plan",
+          "model_id",
+          "confidence_horizon_s"
+        ],
+        "title": "TripTrace",
+        "description": "Canonical planner output. Verification checks spoken/displayed numbers\nagainst allowed_numbers only."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
