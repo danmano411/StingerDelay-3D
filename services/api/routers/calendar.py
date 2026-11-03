@@ -1,34 +1,42 @@
-"""Calendar next-event (mock until Wave C1 OAuth)."""
-
+"""Calendar endpoints: sample schedule, .ics import, Google not configured."""
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+import requests
+from fastapi import APIRouter, Body, HTTPException
 
-try:
-    from contracts import CalendarNextResponse  # type: ignore
-except ImportError:
-    CalendarNextResponse = None  # type: ignore
-
+from tools import calendar as cal
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
 
 
+@router.get("/status")
+def status() -> dict:
+    return {"source": "ics" if cal.IMPORTED else "sample", "google": cal.GOOGLE, "imported": len(cal.IMPORTED)}
+
+
+@router.post("/import")
+def import_ics(body: str | dict = Body(...)) -> dict:
+    text = body
+    if isinstance(body, dict):
+        try:
+            text = requests.get(body["url"], timeout=10).text if "url" in body else body.get("text", "")
+        except Exception as e:
+            raise HTTPException(502, f"fetch failed: {type(e).__name__}")
+    evs = cal.parse_ics(text)
+    if not evs:
+        raise HTTPException(400, "no VEVENT found")
+    cal.IMPORTED[:] = evs
+    return {"source": "ics", "imported": len(evs)}
+
+
 @router.get("/next")
 def calendar_next() -> dict:
-    """Mock next class/event for offline E2E demos."""
-    payload = {
-        "source": "mock",
-        "synthetic": True,
-        "event": {
-            "id": "mock-class-cs2110",
-            "title": "CS 2110 Lecture",
-            "location": "Klaus Advanced Computing Building",
-            "place_id": "klaus",
-            "start": "2026-11-03T08:30:00-05:00",
-            "end": "2026-11-03T09:20:00-05:00",
-        },
-        "as_of": datetime.now(timezone.utc).isoformat(),
-    }
-    if CalendarNextResponse is not None:
-        return CalendarNextResponse.model_validate(payload).model_dump()
-    return payload
+    now = datetime.now(cal.TZ)
+    e = cal.next_event(now)
+    return {"source": e["source"] if e else "none", "synthetic": not cal.IMPORTED, "event": e,
+            "as_of": now.astimezone(timezone.utc).isoformat()}
+
+
+@router.get("/day")
+def calendar_day() -> dict:
+    return {"source": "ics" if cal.IMPORTED else "sample", "events": cal.events(datetime.now(cal.TZ))}
