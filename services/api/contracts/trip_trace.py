@@ -86,6 +86,10 @@ class Leg(BaseModel):
     geometry_ref: Optional[str] = Field(
         None, description="Id of polyline/geometry asset; not inline OSM"
     )
+    path: list[list[float]] = Field(default_factory=list, description="[[lat,lon],...]")
+    distance_m: Optional[float] = None
+    estimate: bool = False
+    synthetic: bool = False
 
 
 class TripPlan(BaseModel):
@@ -102,6 +106,7 @@ class TripPlan(BaseModel):
         None, ge=0.0, le=1.0, description="Probability of catching the bus"
     )
     explanation_facts: list[str] = Field(default_factory=list)
+    mode: str = Field("walk_only", description="walk_only | bus")
 
 
 class SocialFactor(BaseModel):
@@ -132,6 +137,9 @@ class TripTrace(BaseModel):
     confidence_horizon_s: float = Field(..., ge=0)
     social_factor: Optional[SocialFactor] = None
     verification_version: str = "v0"
+    status: str = Field("ok", description="ok | at_risk")
+    origin_name: Optional[str] = None
+    destination_name: Optional[str] = None
 
 
 # Convenience aliases for OpenAPI / export clarity

@@ -1,0 +1,1 @@
+{"model_id":"eta_decile_summary_v0","source":"reference/stinger-delay-summary.md section 2 (bus dataset, best model MAE seconds)","buckets":[{"max_eta_s":120,"mae_s":83},{"max_eta_s":300,"mae_s":103},{"max_eta_s":600,"mae_s":134},{"max_eta_s":1200,"mae_s":169}],"beyond":{"slope_s_per_s":0.1,"note":"widen beyond 20 min"}}
