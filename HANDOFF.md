@@ -138,3 +138,20 @@ Non-solar baseplate from the previous project:
 - `reference/stinger-delay-summary.md` — model comparison results (44–54% better than TransLoc)
 
 The full Stinger Delay source (GPS logs, notebooks, trained model artifacts) lives in the original zip and at https://github.com/gt-big-data/stinger-delay. Use these files as the starting point for the planner and predictor. No solar content was imported.
+
+## 11. 3D campus simulation baseplate
+
+The original Three.js campus twin is now in `web-sim/`:
+
+```bash
+cd web-sim
+python -m http.server 8080
+# open http://localhost:8080
+```
+
+- Buildings, roads, green space (OSM)
+- Buses replaying real Stinger Delay GPS (map-matched)
+- Sun geometry for dynamic lighting
+- Solar/materials/energy panes still present in the UI but can be ignored or stripped
+
+This is the visual baseplate. The planner and Grok layer will sit on top of it.
