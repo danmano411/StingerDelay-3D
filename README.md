@@ -32,12 +32,18 @@ This repo is shared by multiple Grok agents. Keep work separated so agents do no
 
 See `docs/PRODUCT_VISION.md` and `HANDOFF.md` for the full executable breakdown.
 
+**Active parallel execution plan:** [`docs/superpowers/plans/2026-11-02-parallel-e2e-web.md`](docs/superpowers/plans/2026-11-02-parallel-e2e-web.md)  
+**Ledger:** [`docs/notes/EXECUTION_LEDGER.txt`](docs/notes/EXECUTION_LEDGER.txt)  
+**iOS handshake:** [`docs/IOS_AGENT.md`](docs/IOS_AGENT.md)
+
 1. Deterministic planner (walk + transit + Monte Carlo quantiles from Stinger Delay).
 2. PRT-style segmented plan card + confidence bands that widen with time horizon.
 3. In-app Grok Bot helper (Voice + Calendar): personal daily bus schedule from classes.
 4. Secondary X signal layer (crowds / events → extra uncertainty).
 5. Full session, re-planning, verification, explainability.
 6. Separate iOS agent consumes the same backend APIs.
+
+**Product non-goals:** solar/PV/materials/energy UI in the shipping app.
 
 ## Related
 

@@ -1,0 +1,28 @@
+StingerDelay-3D execution ledger
+Started: 2026-11-02 (web agent / Cursor)
+Plan: docs/superpowers/plans/2026-11-02-parallel-e2e-web.md
+Repo: https://github.com/danmano411/StingerDelay-3D
+Branch: main
+iOS ownership: apps/ios/ FORBIDDEN for this agent
+
+Rulings:
+- Ruling: Use ETA-decile lookup predictor (v0) instead of shipping untrained ML — matches Stinger Delay research summary, keeps API lightweight for iOS — cost if wrong: lower accuracy until real model artifacts are wired.
+- Ruling: Strip solar from product UI; keep sun geometry only for 3D lighting — product vision excludes solar — cost if wrong: lose solar demo chrome (acceptable).
+- Ruling: Continuous push to main authorized by user request for parallel iOS agent — cost if wrong: noisy history; prefer small commits.
+- Ruling: Mock calendar / X / Grok when secrets missing so E2E works offline — cost if wrong: demos != production connectors.
+
+Wave status:
+A1 contracts .......... PENDING
+A2 web scaffold ....... PENDING
+A3 api scaffold ....... PENDING
+A4 normalize data ..... PENDING
+A5 strip solar ........ PENDING
+A6 ios handshake ...... PENDING
+B* .................... BLOCKED until A1+A4
+C* .................... BLOCKED until B2+B4
+
+Blockers:
+(none yet)
+
+Push log:
+(none yet)

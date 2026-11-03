@@ -1,5 +1,18 @@
 # Incremental plan updates
 
+## 2026-11-02 — Parallel E2E web execution plan
+
+Full parallel plan: `docs/superpowers/plans/2026-11-02-parallel-e2e-web.md`  
+Ledger: `docs/notes/EXECUTION_LEDGER.txt`  
+iOS handshake: `docs/IOS_AGENT.md`
+
+Waves:
+- **A** (parallel): contracts, web scaffold, API scaffold, normalize data, strip solar, iOS handshake
+- **B** (parallel after A): predictor, planner, verification, PRT card, map shell, IndexedDB
+- **C** (parallel after B core): calendar, day schedule, Grok helper, X signals, E2E runbook
+
+Product non-goals for this build: solar/PV/materials/energy UI; `apps/ios/` edits; training new ML from raw GPS.
+
 ## 2026-11-02 — Grok Bot + calendar + PRT-style UI + confidence bands
 
 Added to the base Buzz Route spec:
