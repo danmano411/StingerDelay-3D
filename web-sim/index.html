@@ -86,9 +86,22 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
 #replay{position:fixed;right:16px;bottom:112px;z-index:4;font:600 10px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#5b6679;pointer-events:none}
 .kpis,#p-mat,#p-energy,.tabs button[data-t=mat],.tabs button[data-t=energy]{display:none!important}
 </style>
+<script>
+// Diagnostics for browsers we can't inspect: shows the failure on screen and logs it to the API access log.
+(function () {
+  const report = m => { try { fetch('__simlog?m=' + encodeURIComponent(String(m).slice(0, 300))).catch(() => {}); } catch (e) {} };
+  const show = m => { report(m); const d = document.createElement('div'); d.setAttribute('role', 'alert'); d.textContent = '3D view error: ' + m;
+    d.style.cssText = 'position:fixed;top:12px;left:12px;right:12px;z-index:99;background:#111;color:#fff;padding:12px;font:14px system-ui;border:2px solid #B3A369';
+    (document.body || document.documentElement).appendChild(d); };
+  addEventListener('error', e => show(e.message || ('failed to load ' + (e.target && (e.target.src || e.target.href)))), true);
+  addEventListener('unhandledrejection', e => show(e.reason && e.reason.message || e.reason));
+  setTimeout(() => { const c = document.querySelector('canvas'), g = c && (c.getContext('webgl2') || c.getContext('webgl'));
+    report(JSON.stringify({ ua: navigator.userAgent.slice(-60), hidden: document.hidden, bridge: !!window.simBridge, canvas: c ? [c.width, c.height] : null, gl: !!g, lost: g ? g.isContextLost() : null, size: [innerWidth, innerHeight], frame: window.__simFrames || 0 })); }, 6000);
+})();
+</script>
 <script src="data.js"></script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
- "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"./vendor/three/build/three.module.js",
+ "three/addons/":"./vendor/three/addons/"}}</script>
 </head>
 <body>
 <canvas id="view" aria-label="3D model of the Georgia Tech campus"></canvas>
@@ -742,7 +755,7 @@ function loop(now) {
   walkTick(dt, now);
   if (camAnim && !W) { camAnim.k = Math.min(1, camAnim.k + dt / 1.6); const e = camAnim.k < .5 ? 2 * camAnim.k ** 2 : 1 - (-2 * camAnim.k + 2) ** 2 / 2;
     camera.position.lerpVectors(camAnim.from, camAnim.to, e); controls.target.lerpVectors(camAnim.tf, camAnim.tt, e); if (camAnim.k >= 1) camAnim = null; }
-  controls.update(); composer.render(); frame++;
+  controls.update(); composer.render(); frame++; window.__simFrames = frame;
   if (xg.children.length && $('#p-mat').classList.contains('on')) { xg.rotation.y += dt * .4;
     const c = $('#xtal'); if (c.width !== c.clientWidth) { xr.setSize(c.clientWidth, c.clientHeight, false); xc.aspect = c.clientWidth / c.clientHeight; xc.updateProjectionMatrix(); }
     xr.render(xs, xc); }

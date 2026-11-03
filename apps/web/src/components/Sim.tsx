@@ -1,5 +1,4 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { API } from '../api/client'
 import type { TripTrace } from '../api/types'
 
 export type Progress = { leg_index: number; leg_kind: string; fraction: number }
@@ -41,7 +40,7 @@ export const Sim = forwardRef<SimHandle, { onProgress: (p: Progress) => void; on
     }, [])
     return (
       <div className="sim">
-        <iframe ref={frame} title="3D campus view" src={`${API}/sim/index.html?embed=1`} />
+        <iframe ref={frame} title="3D campus view" src="/sim/index.html?embed=1" />
         {state !== 'ready' && (
           <div className="sim-msg" role="status">
             {state === 'loading' ? 'Loading 3D view...' : '3D view unavailable. Start the API on port 8000; the panel still works.'}
