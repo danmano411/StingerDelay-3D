@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 from contracts import PlaceRef, PlanConstraints
 from planner.engine import plan, resolve_place
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/day", tags=["day"])
 
 class DayEvent(BaseModel):
     title: str
-    place: str
+    place: str = Field(validation_alias=AliasChoices("place", "location"))
     start: datetime
     end: Optional[datetime] = None
 

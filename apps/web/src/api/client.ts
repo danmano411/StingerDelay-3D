@@ -17,7 +17,7 @@ export const chat = (conversation_id: string, message: string, origin?: { lat: n
   j<ChatResponse>('/grok/chat', post(origin ? { conversation_id, message, origin } : { conversation_id, message }))
 export const status = () => j<GrokStatus>('/grok/status')
 export const calendarDay = () => j<{ events?: CalEvent[]; source?: string } | CalEvent[]>('/calendar/day')
-export const planDay = (events: CalEvent[]) => j<{ entries: DayEntry[] }>('/day/plan', post({ events }))
+export const planDay = (events: CalEvent[]) => j<{ entries: DayEntry[] }>('/day/plan', post({ events: events.map((e) => ({ ...e, place: e.place ?? e.location })) }))
 export const importIcs = (file: File) => {
   const f = new FormData()
   f.append('file', file)
