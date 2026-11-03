@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Georgia Tech 3D Campus</title>
+<title>Buzz Route</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -82,6 +82,9 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
 @media (max-width:900px){#side{top:auto;left:16px;right:16px;width:auto;height:42vh;bottom:112px}#brand{width:auto;right:16px}#credits{display:none}
   #timeline{grid-template-columns:auto 1fr}#timeline .dates{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.embed .panel,.embed #credits,.embed .lbl,.embed #tip,.embed #replay{display:none!important}
+#replay{position:fixed;right:16px;bottom:112px;z-index:4;font:600 10px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:#5b6679;pointer-events:none}
+.kpis,#p-mat,#p-energy,.tabs button[data-t=mat],.tabs button[data-t=energy]{display:none!important}
 </style>
 <script src="data.js"></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
@@ -91,8 +94,8 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
 <canvas id="view" aria-label="3D model of the Georgia Tech campus"></canvas>
 
 <header class="panel" id="brand">
-  <div class="eyebrow">SOLAR STINGER · LEVEL 10</div>
-  <h1>Georgia Tech digital twin</h1>
+  <div class="eyebrow">BUZZ ROUTE</div>
+  <h1>Georgia Tech campus</h1>
   <p class="q">Georgia Tech campus with Stinger buses (replay)</p>
   <div class="kpis">
     <div class="kpi"><b id="k-demand">–</b><span>electric fleet demand / yr</span></div>
@@ -108,10 +111,10 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
     <button data-t="mat">Materials</button><button data-t="energy">Energy</button>
   </nav>
   <section class="pane on" id="p-scene">
-    <h3>Colour buildings by</h3>
+    <div hidden><h3>Colour buildings by</h3>
     <div class="seg" id="mode"><button data-v="solar" class="on">Solar yield</button><button data-v="adopt">PV roofs</button><button data-v="arch">Plain</button></div>
     <div id="legend" style="margin-top:10px"><div class="legend"></div><div class="legend-l"><span>50%</span><span>roof shading loss (log scale)</span><span>0.1%</span></div></div>
-    <p class="note">How much of a roof's annual sunlight its neighbours steal (bright = almost none; hover a roof for kWh/m²/yr). Most GT roofs lose under 1%. Computed from a skyline in 36 directions, ray-marched on a 1 m height raster and run through a full typical year (PVGIS/NSRDB). Grey buildings are off campus.</p>
+    <p class="note">How much of a roof's annual sunlight its neighbours steal (bright = almost none; hover a roof for kWh/m²/yr). Most GT roofs lose under 1%. Computed from a skyline in 36 directions, ray-marched on a 1 m height raster and run through a full typical year (PVGIS/NSRDB). Grey buildings are off campus.</p></div>
     <h3>View</h3>
     <div class="row"><label for="busScale">Bus size (exaggeration)</label><input id="busScale" type="range" min="1" max="5" step=".5" value="3.5"><span class="val" id="busScaleV">3.5×</span></div>
     <div class="row"><label for="labels">Labels</label><input id="labels" type="checkbox" checked></div>
@@ -164,6 +167,7 @@ canvas.chart{width:100%;height:150px;display:block;margin:4px 0 2px}
   </div>
 </footer>
 <div id="tip"></div>
+<div id="replay">replay</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -268,11 +272,10 @@ function paintBuildings() {
   const adopt = new Set(ledger.adopted);
   const wallC = new THREE.Color(0x3a4458), offRoof = new THREE.Color(0x2a3140), offWall = new THREE.Color(0x1f2530),
         plain = new THREE.Color(0xc8cdd6), plainWall = new THREE.Color(0x9aa1ad), green = new THREE.Color(0x4cc38a), dim = new THREE.Color(0x3b4556);
-  const roofC = T.buildings.map((b, i) => state.mode === 'arch' ? plain : state.mode === 'adopt' ? (adopt.has(i) ? green : b.c ? dim : offRoof)
-    : b.c && b.a > 0 ? inferno(1 - Math.log10(Math.max(1 - b.y / YMAX, 1e-3) / 1e-3) / Math.log10(500)) : offRoof);
+  const roofN = new THREE.Color(0x8d95a3);
   for (let v = 0; v < col.count; v++) {
     const i = bid.getX(v), b = T.buildings[i], roof = nrm.getY(v) > .5;
-    const c = roof ? roofC[i] : state.mode === 'arch' ? plainWall : b.c ? wallC : offWall;
+    const c = roof ? roofN : b.c ? wallC : offWall;
     col.setXYZ(v, c.r, c.g, c.b);
   }
   col.needsUpdate = true;
@@ -377,7 +380,7 @@ function updateSun() {
   const i = clamp(Math.floor(h), 0, 8759), temp = E.temp[i];
   const tl = String(Math.floor(state.t / 3600)).padStart(2, '0') + ':' + String(Math.floor(state.t % 3600 / 60)).padStart(2, '0');
   $('#clock').innerHTML = `${tl}<small>${DST(state.doy) ? 'EDT' : 'EST'}</small>`;
-  $('#sunline').textContent = `Sun ${s.el > 0 ? `${s.el.toFixed(1)}° up, azimuth ${s.az.toFixed(0)}°` : 'below the horizon'} · TMY hour: ${temp.toFixed(1)} °C, GHI ${E.ghi[i]} W/m² · campus PV ${fmt(E.pv_per_eta[i] * eta() * ledger.share / 1000, 2)} MW on adopted roofs`;
+  $('#sunline').textContent = `Sun ${s.el > 0 ? `${s.el.toFixed(1)}° up, azimuth ${s.az.toFixed(0)}°` : 'below the horizon'} · TMY hour: ${temp.toFixed(1)} °C, GHI ${E.ghi[i]} W/m²`;
   return temp;
 }
 
@@ -555,9 +558,158 @@ canvas.addEventListener('pointermove', e => {
     html = `<b style="color:${b.r.color}">${b.r.name}</b> ${b.rec ? '· vehicle ' + b.rec.id : '· simulated'}<br>${fmt(b.v * 2.237, 0)} mph · SOC ${fmt(100 * b.soc)}% of ${state.batt} kWh`;
   } else { const h = ray.intersectObject(bMesh)[0];
     if (h) { const i = bGeom.attributes.bid.getX(h.face.a), b = T.buildings[i];
-      html = `<b>${b.n || (b.c ? 'Campus building' : 'Off-campus building')}</b><br>${b.h.toFixed(0)} m tall` + (b.c && b.a ? ` · ${fmt(b.a)} m² usable roof<br>${fmt(b.y)} kWh/m²/yr after shading (sky view ${fmt(100 * b.s)}%)<br>≈ ${fmt(b.y * b.a / campusSum * PV1 * eta() / 1000)} MWh/yr with ${M.picks[state.mat].f}` : ''); } }
+      html = `<b>${b.n || (b.c ? 'Campus building' : 'Off-campus building')}</b><br>${b.h.toFixed(0)} m tall`; } }
   tip.style.display = html ? 'block' : 'none'; tip.innerHTML = html; tip.style.left = e.clientX + 14 + 'px'; tip.style.top = e.clientY + 14 + 'px';
 });
+
+// ------------------------------------------------------------------ Buzz Route bridge (see docs/contracts/sim_bridge_v0.md)
+const Q = new URLSearchParams(location.search), EMBED = Q.get('embed') === '1', DEMO = Q.get('demo') === '1';
+if (EMBED) document.documentElement.classList.add('embed');
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LAT0 = T.meta.origin[0], LON0 = T.meta.origin[1], KX = 111320 * Math.cos(LAT0 * Math.PI / 180), KY = 110574;
+const toXY = ([la, lo]) => [(lo - LON0) * KX, (la - LAT0) * KY];
+const toLL = (x, y) => [LAT0 + y / KY, LON0 + x / KX];
+function post(m) {
+  try { if (window.parent && window.parent !== window) window.parent.postMessage(m, '*'); } catch (e) {}
+  try { window.webkit?.messageHandlers?.simBridge?.postMessage(m); } catch (e) {}
+}
+const planGrp = new THREE.Group(); scene.add(planGrp);
+const GOLDC = new THREE.Color(0xffc933).multiplyScalar(1.6), WHITEC = new THREE.Color(1, 1, 1).multiplyScalar(1.5);
+const noDepth = (o, ro) => { o.material.depthTest = false; o.renderOrder = ro; return o; };
+const walker = new THREE.Group(); walker.visible = false; scene.add(walker);
+// person built from simple shapes: sphere head, capsule torso, swinging legs and arms (+x is forward), exaggerated scale
+const capsule = new THREE.Group(); capsule.scale.setScalar(1.6);
+const pm = (hex, em) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: em, roughness: .6 });
+const part = (geo, mat, x, y, z, parent) => { const m = noDepth(new THREE.Mesh(geo, mat), 13); m.position.set(x, y, z); parent.add(m); return m; };
+const limb = (len, r, mat, x, y, z) => { const p = new THREE.Group(); p.position.set(x, y, z); part(new THREE.CapsuleGeometry(r, len, 4, 8).translate(0, -(len / 2 + r), 0), mat, 0, 0, 0, p); capsule.add(p); return p; };
+const mSkin = pm(0xffd9b0, .5), mShirt = pm(0xffc933, .9), mPants = pm(0x1c4f8f, .7);
+const torso = part(new THREE.CapsuleGeometry(2.8, 6, 4, 10), mShirt, 0, 15, 0, capsule);
+part(new THREE.SphereGeometry(3.2, 16, 12), mSkin, 0, 22, 0, capsule);
+const legL = limb(6, 1.6, mPants, 0, 11, 1.7), legR = limb(6, 1.6, mPants, 0, 11, -1.7);
+const armL = limb(5, 1.2, mShirt, 0, 19, 4.4), armR = limb(5, 1.2, mShirt, 0, 19, -4.4);
+let stride = 0;
+const wring = noDepth(new THREE.Mesh(new THREE.RingGeometry(10, 13, 48).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: GOLDC, toneMapped: false, transparent: true, opacity: .85, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })), 12);
+wring.position.y = 1.5;
+const busMark = new THREE.Mesh(new THREE.BoxGeometry(24, 7, 8).translate(0, 3.5, 0), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false })); busMark.visible = false;
+walker.add(busMark, capsule, wring);
+let plan = null, W = null;
+
+function dashes(p, on, off) {          // polyline -> list of short polylines (dash pattern in metres)
+  const out = []; let cur = [p[0]], d = true, left = on;
+  for (let i = 1; i < p.length; i++) {
+    let [ax, ay] = p[i - 1]; const [bx, by] = p[i]; let L = Math.hypot(bx - ax, by - ay);
+    while (L > left) { const f = left / L; ax += (bx - ax) * f; ay += (by - ay) * f; L -= left;
+      if (d) { cur.push([ax, ay]); out.push(cur); } else cur = [[ax, ay]];
+      d = !d; left = d ? on : off; }
+    left -= L; if (d) cur.push([bx, by]);
+  }
+  if (d && cur.length > 1) out.push(cur);
+  return out;
+}
+function frameRoute(cx, cy, span) {
+  const c = V3(cx, cy), d = Math.max(span * 1.3, 260), to = c.clone().add(new THREE.Vector3(0, d * .8, d * .7));
+  if (REDUCED) { camera.position.copy(to); controls.target.copy(c); camAnim = null; return; }
+  camAnim = { from: camera.position.clone(), to, tf: controls.target.clone(), tt: c, k: 0 };
+}
+function stopWalk() { W = null; walker.visible = false; controls.enabled = true; }
+function clearPlan() {
+  stopWalk(); plan = null;
+  planGrp.children.slice().forEach(o => { planGrp.remove(o); o.geometry?.dispose(); o.children.forEach(c => c.geometry?.dispose()); });
+}
+function showPlan(trace) {
+  clearPlan();
+  const raw = trace?.plan?.legs || [];
+  const legs = raw.map(l => {
+    const pts = (l.path || []).map(toXY), cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const rt = routes.find(r => r.id === l.route_id || r.name === l.route_id);
+    return { kind: l.kind, pts, cum, total: cum.at(-1) || 0, dur: Math.max(1, +l.duration_s_p50 || 1), col: rt ? rt.col.clone().multiplyScalar(1.5) : GOLDC };
+  });
+  const first = legs.find(l => l.pts.length); if (!first) return;
+  let prev = first.pts[0]; legs.forEach(l => { if (!l.pts.length) l.pts = [prev]; else prev = l.pts.at(-1); });
+  const lines = [], all = [];
+  for (const l of legs) {
+    all.push(...l.pts); if (l.pts.length < 2 || l.kind === 'wait') continue;
+    if (l.kind === 'ride') lines.push({ pts: l.pts, w: 9, color: l.col });
+    else dashes(l.pts, 16, 9).forEach(pts => lines.push({ pts, w: 6, color: l.kind === 'walk' ? GOLDC : WHITEC }));
+  }
+  if (lines.length) { const m = new THREE.Mesh(ribbons(lines, 3), new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, transparent: true, opacity: .95, depthTest: false })); m.renderOrder = 10; planGrp.add(m); }
+  const pin = (p, col) => { const g = new THREE.Group(); g.position.copy(V3(p[0], p[1]));
+    const beam = noDepth(new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 70, 12).translate(0, 35, 0), new THREE.MeshBasicMaterial({ color: col, toneMapped: false })), 11);
+    const ball = noDepth(new THREE.Mesh(new THREE.SphereGeometry(8, 20, 14).translate(0, 74, 0), new THREE.MeshBasicMaterial({ color: col, toneMapped: false })), 11);
+    g.add(beam, ball); planGrp.add(g); };
+  pin(all[0], new THREE.Color(0x4cc38a).multiplyScalar(2)); pin(all.at(-1), new THREE.Color(0xff5f56).multiplyScalar(2));
+  plan = { legs, total: legs.reduce((s, l) => s + l.dur, 0) };
+  const px = all.map(p => p[0]), py = all.map(p => p[1]), x0 = Math.min(...px), x1 = Math.max(...px), y0 = Math.min(...py), y1 = Math.max(...py);
+  frameRoute((x0 + x1) / 2, (y0 + y1) / 2, Math.max(x1 - x0, y1 - y0));
+}
+function startWalk(speed) {
+  if (!plan) return;
+  W = { el: 0, T: 25 / (+speed > 0 ? +speed : 1), lastPost: -1e9, hd: new THREE.Vector3(0, 0, -1) };
+  walker.visible = true; controls.enabled = false; camAnim = null;
+}
+function walkTick(dt, now) {
+  if (!W) return;
+  W.el = Math.min(W.T, W.el + dt);
+  const u = W.el / W.T * plan.total; let acc = 0, i = 0;
+  while (i < plan.legs.length - 1 && acc + plan.legs[i].dur <= u) acc += plan.legs[i++].dur;
+  const l = plan.legs[i], fr = clamp((u - acc) / l.dur, 0, 1), moving = l.kind !== 'wait' && l.pts.length > 1 && l.total > 0;
+  let x, y, ang = null;
+  if (moving) { const p = posAt(l, Math.min(fr * l.total, l.total - 1e-6)); x = p.x; y = p.y; ang = p.ang; } else [x, y] = l.pts[0];
+  if (ang != null) W.hd.lerp(new THREE.Vector3(Math.cos(ang), 0, -Math.sin(ang)), REDUCED ? 1 : 1 - Math.exp(-4 * dt)).normalize();
+  const pos = V3(x, y), ride = l.kind === 'ride';
+  walker.position.copy(pos); walker.rotation.y = Math.atan2(-W.hd.z, W.hd.x);
+  busMark.visible = ride; if (ride) busMark.material.color.copy(l.col);
+  capsule.position.y = ride ? 7 : 0;
+  if (ride) { legL.rotation.z = legR.rotation.z = 1.45; armL.rotation.z = armR.rotation.z = .5; torso.position.y = 15; }
+  else if (moving) { stride += dt * 9; const s = Math.sin(stride);
+    legL.rotation.z = s * .75; legR.rotation.z = -s * .75; armL.rotation.z = -s * .6; armR.rotation.z = s * .6; torso.position.y = 15 + Math.abs(s) * .5; }
+  else { const b = Math.sin(now / 500); legL.rotation.z = legR.rotation.z = 0; armL.rotation.z = armR.rotation.z = b * .05; torso.position.y = 15 + b * .3; }
+  const wait = l.kind === 'wait';
+  wring.scale.setScalar(1 + (wait ? .35 * Math.sin(now / 160) : .08 * Math.sin(now / 300)));
+  wring.material.opacity = wait ? .6 + .35 * Math.sin(now / 160) : .85;
+  const k = REDUCED ? 1 : 1 - Math.exp(-3 * dt);
+  camera.position.lerp(pos.clone().addScaledVector(W.hd, -62).add(new THREE.Vector3(0, 40, 0)), k);
+  controls.target.lerp(pos.clone().add(new THREE.Vector3(0, 18, 0)), k);
+  const fin = W.el >= W.T;
+  if (fin || now - W.lastPost >= 250) { W.lastPost = now; const [la, lo] = toLL(x, y);
+    post({ type: 'walk.progress', leg_index: i, leg_kind: l.kind, fraction: fin ? 1 : fr, lat: la, lon: lo }); }
+  if (fin) { W = null; controls.enabled = true; busMark.visible = false; post({ type: 'walk.done' }); }
+}
+function receive(msg) {
+  if (!msg || typeof msg !== 'object') return;
+  try {
+    switch (msg.type) {
+      case 'plan.show': showPlan(msg.trace); break;
+      case 'plan.clear': clearPlan(); break;
+      case 'walk.start': startWalk(msg.speed); break;
+      case 'walk.stop': stopWalk(); break;
+      case 'camera.focus': if (isFinite(msg.lat) && isFinite(msg.lon)) { const [x, y] = toXY([msg.lat, msg.lon]), c = V3(x, y);
+          const to = c.clone().add(new THREE.Vector3(0, 260, 260));
+          if (REDUCED) { camera.position.copy(to); controls.target.copy(c); } else camAnim = { from: camera.position.clone(), to, tf: controls.target.clone(), tt: c, k: 0 }; } break;
+    }
+  } catch (e) { console.warn('simBridge', e); }
+}
+window.simBridge = { receive };
+addEventListener('message', e => { let m = e.data; if (typeof m === 'string') { try { m = JSON.parse(m); } catch { return; } } receive(m); });
+
+// click (not drag) on a building -> sim.pick
+let down = null;
+canvas.addEventListener('pointerdown', e => down = { x: e.clientX, y: e.clientY, t: performance.now() });
+canvas.addEventListener('pointerup', e => {
+  const d = down; down = null;
+  if (!d || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5 || performance.now() - d.t > 600) return;
+  mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(mouse, camera);
+  const h = ray.intersectObject(bMesh)[0]; if (!h) return;
+  const b = T.buildings[bGeom.attributes.bid.getX(h.face.a)], [la, lo] = toLL(h.point.x, -h.point.z);
+  post({ type: 'sim.pick', name: b.n || 'Building', lat: la, lon: lo });
+});
+
+const DEMO_TRACE = { plan: { legs: [
+  { kind: 'walk', route_id: null, duration_s_p50: 150, label: 'Walk to stop', path: [[33.7738, -84.3987], [33.7745, -84.3985], [33.7752, -84.3978]] },
+  { kind: 'wait', route_id: 'red', duration_s_p50: 60, label: 'Wait', path: [[33.7752, -84.3978]] },
+  { kind: 'ride', route_id: 'red', duration_s_p50: 180, label: 'Ride', path: [[33.7752, -84.3978], [33.7760, -84.3970], [33.7766, -84.3965]] },
+  { kind: 'walk', route_id: null, duration_s_p50: 60, label: 'Walk to Klaus', path: [[33.7766, -84.3965], [33.7772, -84.3963]] }] } };
 
 // ------------------------------------------------------------------ loop
 function place(el, v3, show) {
@@ -567,14 +719,17 @@ function place(el, v3, show) {
   if (vis) { el.style.left = (p.x + 1) / 2 * innerWidth + 'px'; el.style.top = (1 - p.y) / 2 * innerHeight + 'px'; }
 }
 let last = performance.now(), tempC = 15, frame = 0;
+let running = false;
 function loop(now) {
+  if (document.hidden) { running = false; return; }
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (state.playing) { state.t = (state.t + dt * state.speed) % 86400; if (frame % 6 === 0) $('#tod').value = state.t; }
   if (frame % 3 === 0) tempC = updateSun();
   updateBuses(state.t, tempC);
   siteObjs.forEach(s => { const k = (now / 1400) % 1; s.ring.scale.setScalar(1 + k * 1.4); s.ring.material.opacity = 1 - k; place(s.label, s.g.position.clone().setY(s.h), state.labels); });
   roofLbls.forEach(l => place(l.d, l.p, state.labels && state.mode !== 'arch'));
-  if (camAnim) { camAnim.k = Math.min(1, camAnim.k + dt / 1.6); const e = camAnim.k < .5 ? 2 * camAnim.k ** 2 : 1 - (-2 * camAnim.k + 2) ** 2 / 2;
+  walkTick(dt, now);
+  if (camAnim && !W) { camAnim.k = Math.min(1, camAnim.k + dt / 1.6); const e = camAnim.k < .5 ? 2 * camAnim.k ** 2 : 1 - (-2 * camAnim.k + 2) ** 2 / 2;
     camera.position.lerpVectors(camAnim.from, camAnim.to, e); controls.target.lerpVectors(camAnim.tf, camAnim.tt, e); if (camAnim.k >= 1) camAnim = null; }
   controls.update(); composer.render(); frame++;
   if (xg.children.length && $('#p-mat').classList.contains('on')) { xg.rotation.y += dt * .4;
@@ -582,8 +737,14 @@ function loop(now) {
     xr.render(xs, xc); }
   requestAnimationFrame(loop);
 }
-recompute(true); drawDesign(); showMaterial();
-requestAnimationFrame(loop);
+drawDesign(); paintBuildings();
+function kick() { if (!running) { running = true; last = performance.now(); requestAnimationFrame(loop); } }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
+kick();
+setTimeout(() => {
+  post({ type: 'sim.ready' });
+  if (DEMO) { receive({ type: 'plan.show', trace: DEMO_TRACE }); setTimeout(() => receive({ type: 'walk.start' }), REDUCED ? 300 : 2200); }
+}, 400);
 window.__twin = { state, ledger, buses, T, sun, renderer, scene, camera };   // handy in the devtools console
 </script>
 </body>
