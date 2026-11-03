@@ -36,14 +36,20 @@ struct ConfidenceBandView: View {
             }
             .frame(height: 14)
 
-            HStack {
+            HStack(spacing: 6) {
                 Text("p10 \(time(band.arrivalP10))")
-                Spacer()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
                 Text("p50 \(time(band.arrivalP50))")
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
-                Spacer()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
                 Text("p90 \(time(band.arrivalP90))")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .font(.caption2.monospaced())
             .foregroundStyle(.white.opacity(0.7))
@@ -52,6 +58,7 @@ struct ConfidenceBandView: View {
                 Text(note)
                     .font(.caption2)
                     .foregroundStyle(.white.opacity(0.55))
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(12)

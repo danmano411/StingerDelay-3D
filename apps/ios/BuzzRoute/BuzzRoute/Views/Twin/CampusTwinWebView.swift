@@ -34,6 +34,46 @@ struct CampusTwinWebView: UIViewRepresentable {
 
             let controller = config.userContentController
             controller.add(self, name: "twinLog")
+            // Force-hide HTML chrome (timeline / brand / side). Native SwiftUI owns chrome.
+            // TwinPayload may lag web-sim's `.embed` CSS, so inject styles directly.
+            let hideChromeJS = """
+            (function(){
+              function hide(){
+                try {
+                  document.documentElement.classList.add('embed');
+                  if (!document.getElementById('buzz-embed-hide')) {
+                    var s = document.createElement('style');
+                    s.id = 'buzz-embed-hide';
+                    s.textContent = [
+                      '.panel,#brand,#side,#timeline,#credits,#tip,#replay,.lbl{',
+                      'display:none!important;visibility:hidden!important;pointer-events:none!important}',
+                      'canvas#view{inset:0!important}'
+                    ].join('');
+                    (document.head || document.documentElement).appendChild(s);
+                  }
+                  ['brand','side','timeline','credits','tip','replay'].forEach(function(id){
+                    var el = document.getElementById(id);
+                    if (el) el.style.setProperty('display','none','important');
+                  });
+                } catch (e) {}
+              }
+              hide();
+              document.addEventListener('DOMContentLoaded', hide);
+              setTimeout(hide, 0);
+              setTimeout(hide, 250);
+              setTimeout(hide, 1000);
+            })();
+            """
+            controller.addUserScript(WKUserScript(
+                source: hideChromeJS,
+                injectionTime: .atDocumentStart,
+                forMainFrameOnly: true
+            ))
+            controller.addUserScript(WKUserScript(
+                source: hideChromeJS,
+                injectionTime: .atDocumentEnd,
+                forMainFrameOnly: true
+            ))
             controller.addUserScript(WKUserScript(
                 source: """
                 (function(){

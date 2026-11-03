@@ -23,24 +23,28 @@ struct SegmentRowView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(segment.title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                    Spacer()
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 8)
                     Text(segment.duration.formattedTypical())
                         .font(.caption.weight(.bold).monospaced())
                         .foregroundStyle(GTTheme.gold)
+                        .layoutPriority(1)
                 }
 
                 Text(segment.detail)
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.55))
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text(segment.kind.label.uppercased() + " · " + segment.duration.formattedBand())
                     .font(.caption2.weight(.semibold))
                     .tracking(0.4)
                     .foregroundStyle(.white.opacity(0.4))
+                    .lineLimit(1)
             }
             .padding(.bottom, isLast ? 0 : 14)
         }
