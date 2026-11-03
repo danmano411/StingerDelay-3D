@@ -226,10 +226,11 @@ struct RoutingEngine {
 
     private func dwellPadding(for line: StingerLine) -> Double {
         switch line {
-        case .trolley: return 0.6
+        case .trolley, .gold: return 0.6
         case .red: return 0.9
         case .blue: return 0.8
         case .green: return 1.1
+        case .clough: return 0.7
         }
     }
 
@@ -238,16 +239,16 @@ struct RoutingEngine {
         case .red: return 8
         case .blue: return 10
         case .green: return 12
-        case .trolley: return 7
+        case .trolley, .gold: return 7
+        case .clough: return 9
         }
     }
 
     private func preferredLine(from lines: Set<String>, origin: CampusPlace, destination: CampusPlace) -> StingerLine {
-        let ordered: [StingerLine] = [.red, .blue, .trolley, .green]
+        let ordered: [StingerLine] = [.red, .blue, .gold, .green, .clough, .trolley]
         if let match = ordered.first(where: { lines.contains($0.rawValue) }) {
             return match
         }
-        // Fall back to destination-serving line
         if let match = ordered.first(where: { destination.stingerRoutes.contains($0.rawValue) }) {
             return match
         }

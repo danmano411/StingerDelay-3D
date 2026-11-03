@@ -17,10 +17,16 @@ final class NavigationViewModel: ObservableObject {
     @Published var nextEvent: CalendarEvent
     @Published var showDestinationPicker: Bool = false
     @Published var showGrokBot: Bool = false
+    @Published var stingerRoutes: [StingerRouteGeo] = CampusCatalog.routes
 
     private var engine = RoutingEngine()
     private let calendar = CalendarStub()
     private var busTask: Task<Void, Never>?
+    private var replaySeconds: Double = {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.hour, .minute, .second], from: Date())
+        return Double((comps.hour ?? 12) * 3600 + (comps.minute ?? 0) * 60 + (comps.second ?? 0))
+    }()
 
     init() {
         let defaultOrigin = MockCampusData.place(id: "culc")
@@ -30,15 +36,15 @@ final class NavigationViewModel: ObservableObject {
                 name: "Campus Center",
                 shortName: "Campus",
                 kind: .landmark,
-                latitude: MockCampusData.campusCenter.latitude,
-                longitude: MockCampusData.campusCenter.longitude,
+                latitude: CampusCatalog.campusCenter.latitude,
+                longitude: CampusCatalog.campusCenter.longitude,
                 stingerRoutes: ["Red"]
             )
         origin = defaultOrigin
         nextEvent = calendar.nextEvent()
         cameraPosition = .region(
             MKCoordinateRegion(
-                center: MockCampusData.campusCenter,
+                center: CampusCatalog.campusCenter,
                 span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
             )
         )
@@ -115,7 +121,7 @@ final class NavigationViewModel: ObservableObject {
         withAnimation(.easeInOut(duration: 0.35)) {
             cameraPosition = .region(
                 MKCoordinateRegion(
-                    center: MockCampusData.campusCenter,
+                    center: CampusCatalog.campusCenter,
                     span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
                 )
             )
@@ -160,15 +166,24 @@ final class NavigationViewModel: ObservableObject {
         busTask?.cancel()
         busTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                try? await Task.sleep(nanoseconds: 2_500_000_000)
                 await MainActor.run {
-                    self?.refreshBuses()
+                    guard let self else { return }
+                    // Advance ~2.5 min of campus time per tick when replay is on
+                    if self.replayMode {
+                        self.replaySeconds = (self.replaySeconds + 150).truncatingRemainder(dividingBy: 86_400)
+                    }
+                    self.refreshBuses()
                 }
             }
         }
     }
 
     private func refreshBuses() {
-        buses = MockCampusData.replayBuses()
+        if !CampusCatalog.routes.isEmpty {
+            buses = CampusCatalog.buses(atSecondsOfDay: replaySeconds)
+        } else {
+            buses = MockCampusData.replayBuses()
+        }
     }
 }

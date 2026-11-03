@@ -6,6 +6,17 @@ struct CampusMapView: View {
 
     var body: some View {
         Map(position: $model.cameraPosition) {
+            ForEach(model.stingerRoutes) { route in
+                let coords = route.coordinates
+                if coords.count >= 2 {
+                    MapPolyline(coordinates: coords)
+                        .stroke(
+                            Color(hex: route.color.replacingOccurrences(of: "#", with: "")),
+                            lineWidth: route.isSynthetic ? 3 : 4
+                        )
+                }
+            }
+
             ForEach(model.placesForMap) { place in
                 Marker(
                     place.shortName,
@@ -28,7 +39,7 @@ struct CampusMapView: View {
                 let coords = trip.polylineCoordinates
                 if coords.count >= 2 {
                     MapPolyline(coordinates: coords)
-                        .stroke(GTTheme.gold, lineWidth: 4)
+                        .stroke(GTTheme.gold, lineWidth: 5)
                 }
             }
         }

@@ -35,6 +35,8 @@ enum StingerLine: String, CaseIterable, Identifiable, Codable {
     case red = "Red"
     case blue = "Blue"
     case green = "Green"
+    case gold = "Gold"
+    case clough = "Clough"
     case trolley = "Trolley"
 
     var id: String { rawValue }
@@ -42,8 +44,10 @@ enum StingerLine: String, CaseIterable, Identifiable, Codable {
     var tintHex: String {
         switch self {
         case .red: return "E04E39"
-        case .blue: return "3A7BD5"
-        case .green: return "2F9E6B"
+        case .blue: return "0000CF"
+        case .green: return "4AB335"
+        case .gold: return "E0C43A"
+        case .clough: return "391B69"
         case .trolley: return "B3A369"
         }
     }
