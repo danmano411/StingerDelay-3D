@@ -8,7 +8,8 @@
 - `README.md` — hierarchy & ownership  
 - `docs/PRODUCT_VISION.md` — product vision and executable breakdown  
 - `docs/PLAN_UPDATES.md` — incremental notes  
-- Full Buzz Route spec was provided in the original conversation (treat as ground truth; large file not fully committed yet)
+- `docs/plans/00-INDEX.md` — current three-plan, 20-minute build
+- `docs/spec/BUZZ_ROUTE_SPEC.md` — full Buzz Route spec (ground truth for the long-term target)
 
 ---
 

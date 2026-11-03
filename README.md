@@ -32,7 +32,9 @@ This repo is shared by multiple Grok agents. Keep work separated so agents do no
 
 See `docs/PRODUCT_VISION.md` and `HANDOFF.md` for the full executable breakdown.
 
-**Active parallel execution plan:** [`docs/superpowers/plans/2026-11-02-parallel-e2e-web.md`](docs/superpowers/plans/2026-11-02-parallel-e2e-web.md)  
+**Start here, 20-minute build:** [`docs/plans/00-INDEX.md`](docs/plans/00-INDEX.md)  
+**Full spec:** [`docs/spec/BUZZ_ROUTE_SPEC.md`](docs/spec/BUZZ_ROUTE_SPEC.md)  
+**Earlier task detail:** [`docs/superpowers/plans/2026-11-02-parallel-e2e-web.md`](docs/superpowers/plans/2026-11-02-parallel-e2e-web.md)  
 **Ledger:** [`docs/notes/EXECUTION_LEDGER.txt`](docs/notes/EXECUTION_LEDGER.txt)  
 **iOS handshake:** [`docs/IOS_AGENT.md`](docs/IOS_AGENT.md)
 

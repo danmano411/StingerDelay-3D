@@ -1,5 +1,9 @@
 # Incremental plan updates
 
+## 2026-11-02 — Three plans, 20-minute build
+
+The build is now three parallel plans under `docs/plans/`: engine and data, web app and 3D sim planner, and Grok integrations (voice-to-text assistant, calendar day planner, live X feed). Start at `docs/plans/00-INDEX.md`. The full spec is committed at `docs/spec/BUZZ_ROUTE_SPEC.md`.
+
 ## 2026-11-02 — Parallel E2E web execution plan
 
 Full parallel plan: `docs/superpowers/plans/2026-11-02-parallel-e2e-web.md`  

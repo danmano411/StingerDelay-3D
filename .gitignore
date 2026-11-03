@@ -10,3 +10,8 @@ apps/ios/BuzzRoute/build/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# Local secrets
+.env
+.env.*
+!.env.example
